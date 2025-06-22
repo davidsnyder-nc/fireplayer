@@ -482,19 +482,19 @@
                         </button>
                     </div>
                     
-                    <!-- Center Skip Controls -->
-                    <div class="flex items-center space-x-3 bg-gray-800 dark:bg-gray-700 rounded-full px-4 py-2">
+                    <!-- Center Skip Controls - Hidden on mobile -->
+                    <div class="hidden sm:flex items-center space-x-3 bg-gray-800 dark:bg-gray-700 rounded-full px-4 py-3">
                         <button id="skipBackBtn" class="themed-icon-button p-2 rounded-full relative flex items-center justify-center" title="Skip back 30 seconds">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0019 16V8a1 1 0 00-1.6-.8l-5.334 4zM4.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0011 16V8a1 1 0 00-1.6-.8l-5.334 4z"/>
                             </svg>
-                            <span class="text-xs font-bold absolute -bottom-1 left-1/2 transform -translate-x-1/2">30</span>
+                            <span class="text-xs font-bold absolute -bottom-2 left-1/2 transform -translate-x-1/2">30</span>
                         </button>
-                        <button id="centerPlayPauseBtn" class="bg-orange-500 hover:bg-orange-600 rounded-full p-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center" disabled title="Play/Pause">
-                            <svg id="centerPlayIcon" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <button id="centerPlayPauseBtn" class="bg-orange-500 hover:bg-orange-600 rounded-full p-3 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center" disabled title="Play/Pause">
+                            <svg id="centerPlayIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M8 5v14l11-7z"/>
                             </svg>
-                            <svg id="centerPauseIcon" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg id="centerPauseIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6" />
                             </svg>
                         </button>
@@ -502,13 +502,29 @@
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.933 12.8a1 1 0 000-1.6L6.6 7.2A1 1 0 005 8v8a1 1 0 001.6.8l5.333-4zM19.933 12.8a1 1 0 000-1.6l-5.333-4A1 1 0 0013 8v8a1 1 0 001.6.8l5.333-4z"/>
                             </svg>
-                            <span class="text-xs font-bold absolute -bottom-1 left-1/2 transform -translate-x-1/2">30</span>
+                            <span class="text-xs font-bold absolute -bottom-2 left-1/2 transform -translate-x-1/2">30</span>
                         </button>
                     </div>
                     
+                    <!-- Mobile Skip Controls - Only visible on mobile -->
+                    <div class="flex sm:hidden items-center space-x-2">
+                        <button id="mobileSkipBackBtn" class="themed-icon-button p-2 rounded-full relative flex items-center justify-center" title="Skip back 30 seconds">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0019 16V8a1 1 0 00-1.6-.8l-5.334 4zM4.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0011 16V8a1 1 0 00-1.6-.8l-5.334 4z"/>
+                            </svg>
+                            <span class="text-xs font-bold absolute -bottom-1 left-1/2 transform -translate-x-1/2">30</span>
+                        </button>
+                        <button id="mobileSkipForwardBtn" class="themed-icon-button p-2 rounded-full relative flex items-center justify-center" title="Skip forward 30 seconds">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.933 12.8a1 1 0 000-1.6L6.6 7.2A1 1 0 005 8v8a1 1 0 001.6.8l5.333-4zM19.933 12.8a1 1 0 000-1.6l-5.333-4A1 1 0 0013 8v8a1 1 0 001.6.8l5.333-4z"/>
+                            </svg>
+                            <span class="text-xs font-bold absolute -bottom-1 left-1/2 transform -translate-x-1/2">30</span>
+                        </button>
+                    </div>
+
                     <div class="flex items-center space-x-4">
                         <!-- Volume Control -->
-                        <div class="flex items-center space-x-2">
+                        <div class="hidden sm:flex items-center space-x-2">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 themed-text-secondary" fill="currentColor" viewBox="0 0 20 20">
                                 <path d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.617.82L4.736 14H2a1 1 0 01-1-1V7a1 1 0 011-1h2.736l3.647-2.82a1 1 0 011 .896zM12 8a1 1 0 011.414 0A5.28 5.28 0 0115 12a5.28 5.28 0 01-1.586 4A1 1 0 0111.828 14.414A3.28 3.28 0 0013 12a3.28 3.28 0 00-1.172-2.414A1 1 0 0112 8z"/>
                                 <path d="M14.657 2.929a1 1 0 011.414 0A9.969 9.969 0 0119 12a9.969 9.969 0 01-2.929 7.071 1 1 0 11-1.414-1.414A7.971 7.971 0 0017 12c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414z"/>
@@ -1474,36 +1490,38 @@ service firebase.storage {
                 updatePlaybackModeUI();
             });
 
-            // Skip buttons - only add listeners if buttons exist
-            const skipBackBtn = document.getElementById('skipBackBtn');
-            const skipForwardBtn = document.getElementById('skipForwardBtn');
-
-            if (skipBackBtn) {
-                skipBackBtn.addEventListener('click', () => {
-                    if (currentPlayingId && audioPlayer.src) {
-                        const newTime = Math.max(0, audioPlayer.currentTime - 30);
-                        audioPlayer.currentTime = newTime;
-                        if (podcastsData[currentPlayingId]) {
-                            podcastsData[currentPlayingId].playbackPosition = newTime;
-                            updateSinglePodcastUI(currentPlayingId);
-                            updatePlaybackPosition(currentPlayingId, newTime);
+            // Skip buttons functionality - works for both desktop and mobile buttons
+            function setupSkipButton(buttonId, skipDirection) {
+                const button = document.getElementById(buttonId);
+                if (button) {
+                    button.addEventListener('click', () => {
+                        if (currentPlayingId && audioPlayer.src) {
+                            const skipAmount = skipDirection === 'back' ? -30 : 30;
+                            let newTime;
+                            
+                            if (skipDirection === 'back') {
+                                newTime = Math.max(0, audioPlayer.currentTime + skipAmount);
+                            } else {
+                                const podcast = podcastsData[currentPlayingId];
+                                newTime = Math.min(podcast?.duration || audioPlayer.duration || 0, audioPlayer.currentTime + skipAmount);
+                            }
+                            
+                            audioPlayer.currentTime = newTime;
+                            if (podcastsData[currentPlayingId]) {
+                                podcastsData[currentPlayingId].playbackPosition = newTime;
+                                updateSinglePodcastUI(currentPlayingId);
+                                updatePlaybackPosition(currentPlayingId, newTime);
+                            }
                         }
-                    }
-                });
+                    });
+                }
             }
 
-            if (skipForwardBtn) {
-                skipForwardBtn.addEventListener('click', () => {
-                    if (currentPlayingId && audioPlayer.src && podcastsData[currentPlayingId]) {
-                        const podcast = podcastsData[currentPlayingId];
-                        const newTime = Math.min(podcast.duration || audioPlayer.duration, audioPlayer.currentTime + 30);
-                        audioPlayer.currentTime = newTime;
-                        podcast.playbackPosition = newTime;
-                        updateSinglePodcastUI(currentPlayingId);
-                        updatePlaybackPosition(currentPlayingId, newTime);
-                    }
-                });
-            }
+            // Setup both desktop and mobile skip buttons
+            setupSkipButton('skipBackBtn', 'back');
+            setupSkipButton('skipForwardBtn', 'forward');
+            setupSkipButton('mobileSkipBackBtn', 'back');
+            setupSkipButton('mobileSkipForwardBtn', 'forward');
 
             const savedView = localStorage.getItem('viewMode') || 'list';
             setViewMode(savedView);
