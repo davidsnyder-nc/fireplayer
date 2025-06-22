@@ -458,8 +458,9 @@
                     <div class="flex items-center space-x-4">
                         <!-- Volume Control -->
                         <div class="flex items-center space-x-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 themed-text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M9 12H3l3-3v6l-3-3h6zm0 0l3 3V9l-3 3z" />
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 themed-text-secondary" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.617.82L4.736 14H2a1 1 0 01-1-1V7a1 1 0 011-1h2.736l3.647-2.82a1 1 0 011 .896zM12 8a1 1 0 011.414 0A5.28 5.28 0 0115 12a5.28 5.28 0 01-1.586 4A1 1 0 0111.828 14.414A3.28 3.28 0 0013 12a3.28 3.28 0 00-1.172-2.414A1 1 0 0112 8z"/>
+                                <path d="M14.657 2.929a1 1 0 011.414 0A9.969 9.969 0 0119 12a9.969 9.969 0 01-2.929 7.071 1 1 0 11-1.414-1.414A7.971 7.971 0 0017 12c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414z"/>
                             </svg>
                             <input type="range" id="volumeSlider" min="0" max="100" value="100" class="w-24 h-2 themed-slider rounded-lg appearance-none cursor-pointer">
                         </div>
@@ -1440,6 +1441,37 @@ service firebase.storage {
                     fetchMoreModal.classList.add('hidden');
                 }
             });
+
+            // Volume control initialization and event handlers
+            const volumeSlider = document.getElementById('volumeSlider');
+            if (volumeSlider) {
+                // Restore saved volume or set default
+                const savedVolume = localStorage.getItem('audioVolume') || '100';
+                volumeSlider.value = savedVolume;
+                audioPlayer.volume = savedVolume / 100;
+                
+                // Handle volume changes
+                volumeSlider.addEventListener('input', (e) => {
+                    const volume = e.target.value / 100;
+                    audioPlayer.volume = volume;
+                    localStorage.setItem('audioVolume', e.target.value);
+                    console.log('Volume changed to:', volume);
+                });
+            }
+
+            // Main play/pause button
+            const mainPlayPauseBtn = document.getElementById('mainPlayPauseBtn');
+            if (mainPlayPauseBtn) {
+                mainPlayPauseBtn.addEventListener('click', () => {
+                    if (currentPlayingId && audioPlayer.src) {
+                        if (audioPlayer.paused) {
+                            audioPlayer.play();
+                        } else {
+                            audioPlayer.pause();
+                        }
+                    }
+                });
+            }
 
             setupSettingsModal();
             loadInitialConfig();
