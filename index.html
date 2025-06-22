@@ -200,30 +200,27 @@
     </div>
 
     <div id="app" class="container mx-auto max-w-4xl p-4 sm:p-6 lg:p-8">
-        <header class="mb-8 flex justify-center items-center">
-            <div class="text-center flex items-center gap-2">
-                 <img src="logo.png"
-                      alt="Fire Player Logo"
-                      class="h-10 w-10"
-                      style="object-fit: contain;"
-                      onerror="this.onerror=null; this.src='https://cdn.pixabay.com/photo/2022/07/21/11/48/fire-7336074_960_720.png';">
-                 <h1 class="text-3xl sm:text-4xl font-bold themed-text-accent whitespace-nowrap">Fire Player</h1>
+        <header class="mb-6">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <img src="logo.png"
+                         alt="Fire Player Logo"
+                         class="h-8 w-8"
+                         style="object-fit: contain;"
+                         onerror="this.onerror=null; this.src='https://cdn.pixabay.com/photo/2022/07/21/11/48/fire-7336074_960_720.png';">
+                    <h1 class="text-2xl font-bold themed-text-accent whitespace-nowrap">🔥 Fire Player</h1>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button id="showUploadFormBtn" class="themed-button-primary font-bold py-2 px-4 rounded-md transition-transform duration-200 transform hover:scale-105">
+                        Add New
+                    </button>
+                    <button id="viewToggleBtn" class="themed-icon-button p-2 rounded-full">
+                        <svg id="icon-grid-view" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+                        <svg id="icon-list-view" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
+                    </button>
+                </div>
             </div>
         </header>
-
-        <div class="flex justify-between items-center mb-4">
-            <div id="uploadContainer">
-                <button id="showUploadFormBtn" class="themed-button-primary font-bold py-2 px-4 rounded-md transition-transform duration-200 transform hover:scale-105">
-                    Add New
-                </button>
-            </div>
-            <div class="flex items-center gap-2">
-                <button id="viewToggleBtn" class="themed-icon-button p-2 rounded-full">
-                    <svg id="icon-grid-view" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
-                    <svg id="icon-list-view" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
-                </button>
-            </div>
-        </div>
 
         <div id="uploadSection" class="themed rounded-lg p-6 mb-8 shadow-lg hidden">
             <h2 class="text-2xl font-semibold mb-4">Add New Podcast</h2>
@@ -363,31 +360,79 @@
 
         <audio id="audioPlayer" class="hidden"></audio>
         
-        <footer class="fixed bottom-0 left-0 right-0 p-4 themed border-t" style="border-color: var(--bg-tertiary-hover)">
-            <div class="container mx-auto max-w-2xl flex justify-around items-center">
-                 <button id="themeToggleButton" class="themed-icon-button p-2 rounded-full transition-colors">
-                    <svg id="theme-icon-dark" xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                    </svg>
-                    <svg id="theme-icon-light" xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                    </svg>
-                </button>
-                 <button id="shuffleButton" class="themed-icon-button p-2 rounded-full transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-shuffle"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line><line x1="4" y1="4" x2="9" y2="9"></line></svg>
-                 </button>
-                  <button id="repeatButton" class="themed-icon-button p-2 rounded-full transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-repeat"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>
-                  </button>
-                 <button id="speedControlButton" class="themed-icon-button p-2 rounded-full transition-colors font-bold text-lg w-16 h-12 flex items-center justify-center">1x</button>
-                 <button id="settingsButton" class="themed-icon-button p-2 rounded-full transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                </button>
+        <!-- Audio Controls -->
+        <div id="audioControls" class="fixed bottom-0 left-0 right-0 themed border-t z-40 hidden" style="border-color: var(--bg-tertiary-hover)">
+            <!-- Now Playing Bar -->
+            <div id="nowPlayingBar" class="flex items-center p-3 border-b" style="border-color: var(--bg-tertiary-hover)">
+                <div class="flex items-center flex-grow min-w-0">
+                    <img id="nowPlayingArtwork" src="" class="w-12 h-12 rounded-lg object-cover mr-3">
+                    <div class="flex-grow min-w-0">
+                        <h4 id="nowPlayingTitle" class="font-semibold truncate text-sm"></h4>
+                        <p id="nowPlayingTime" class="text-xs themed-text-secondary"></p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <!-- Volume Control -->
+                    <div class="flex items-center space-x-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 themed-text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M9 12H3l3-3v6l-3-3h6zm0 0l3 3V9l-3 3z" />
+                        </svg>
+                        <input type="range" id="volumeSlider" min="0" max="100" value="100" class="w-20 h-1 bg-gray-300 rounded-lg appearance-none cursor-pointer">
+                    </div>
+                    <!-- Main Controls -->
+                    <button id="mainPrevBtn" class="themed-icon-button p-2 rounded-full">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                        </svg>
+                    </button>
+                    <button id="mainPlayPauseBtn" class="bg-orange-500 hover:bg-orange-600 rounded-full p-3 transition-all">
+                        <svg id="mainPlayIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M8 5v14l11-7z"/>
+                        </svg>
+                        <svg id="mainPauseIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6" />
+                        </svg>
+                    </button>
+                    <button id="mainNextBtn" class="themed-icon-button p-2 rounded-full">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </button>
+                </div>
             </div>
-        </footer>
+            
+            <!-- Bottom Controls -->
+            <div class="p-3">
+                <div class="container mx-auto max-w-4xl flex justify-between items-center">
+                    <div class="flex items-center space-x-4">
+                        <button id="themeToggleButton" class="themed-icon-button p-2 rounded-full transition-colors">
+                            <svg id="theme-icon-dark" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                            </svg>
+                            <svg id="theme-icon-light" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                            </svg>
+                        </button>
+                        <button id="shuffleButton" class="themed-icon-button p-2 rounded-full transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line><line x1="4" y1="4" x2="9" y2="9"></line></svg>
+                        </button>
+                        <button id="repeatButton" class="themed-icon-button p-2 rounded-full transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>
+                        </button>
+                    </div>
+                    
+                    <div class="flex items-center space-x-4">
+                        <button id="speedControlButton" class="themed-icon-button p-2 rounded-full transition-colors font-bold text-sm w-12 h-8 flex items-center justify-center">1x</button>
+                        <button id="settingsButton" class="themed-icon-button p-2 rounded-full transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <div id="messageBox" class="fixed bottom-24 right-5 bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg opacity-0 transition-opacity duration-300 z-50">
             <p id="messageText"></p>
