@@ -1128,13 +1128,30 @@ service firebase.storage {
 
         // Delete RSS feed - make it globally accessible
         window.deleteFeed = async function(feedId) {
+            console.log('Attempting to delete feed with ID:', feedId);
+            
+            if (!feedId || feedId === 'undefined' || feedId === 'null') {
+                showNotification('Invalid feed ID', 'error');
+                return;
+            }
+            
             try {
-                await deleteDoc(doc(db, 'rss_feeds', feedId));
+                const feedRef = doc(db, 'rss_feeds', feedId);
+                await deleteDoc(feedRef);
+                console.log('Feed deleted successfully:', feedId);
                 loadRssFeeds();
                 showNotification('RSS feed removed', 'success');
             } catch (error) {
                 console.error('Error deleting feed:', error);
-                showNotification('Failed to remove RSS feed', 'error');
+                console.error('Feed ID that failed:', feedId);
+                if (error.code === 'permission-denied') {
+                    showNotification('Permission denied. Check Firestore security rules.', 'error');
+                } else if (error.code === 'not-found') {
+                    showNotification('Feed not found. Refreshing list...', 'error');
+                    loadRssFeeds();
+                } else {
+                    showNotification(`Failed to remove RSS feed: ${error.message}`, 'error');
+                }
             }
         }
 
