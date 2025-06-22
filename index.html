@@ -1116,8 +1116,29 @@ service firebase.storage {
                 showNotification('Upload failed: ' + error.message, 'error');
                 resetUploadUI();
             }
-        }inalArtworkUrl = await uploadArtwork(finalArtworkUrl, `artwork_${Date.now()}.png`);
-            } else if (currentConfig.geminiApiKey) {
+        }
+        
+        async function uploadArtwork(artworkData, fileName) {
+            if (!artworkData) return null;
+            
+            try {
+                let blob;
+                if (artworkData.startsWith('data:')) {
+                    // Convert base64 to blob
+                    const response = await fetch(artworkData);
+                    blob = await response.blob();
+                } else {
+                    blob = artworkData;
+                }
+                
+                const storageRef = ref(storage, `artwork/${userId}/${fileName}`);
+                const uploadTask = await uploadBytesResumable(storageRef, blob);
+                return await getDownloadURL(uploadTask.ref);
+            } catch (error) {
+                console.error('Artwork upload failed:', error);
+                return null;
+            }
+        }
                 fileLabel.textContent = "Creating Artwork...";
                 const generatedArtBase64 = await generateArtwork(intelligentName);
                 if(generatedArtBase64) {
