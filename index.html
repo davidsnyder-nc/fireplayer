@@ -314,6 +314,32 @@
             <div id="playedListContainer"></div>
         </div>
 
+        <!-- Fetch More Episodes Modal -->
+        <div id="fetchMoreModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+            <div class="themed rounded-lg p-6 max-w-md w-full mx-4">
+                <h3 class="text-xl font-semibold mb-4">Fetch Older Episodes</h3>
+                <div class="mb-4">
+                    <p class="text-sm themed-text-secondary mb-2">Podcast: <span id="fetchModalPodcastName" class="themed-text-primary"></span></p>
+                    <label for="fetchCount" class="block text-sm font-medium themed-text-secondary mb-2">Number of older episodes to fetch:</label>
+                    <select id="fetchCount" class="w-full themed-input rounded-md px-3 py-2">
+                        <option value="5">Last 5 episodes</option>
+                        <option value="10">Last 10 episodes</option>
+                        <option value="15">Last 15 episodes</option>
+                        <option value="20">Last 20 episodes</option>
+                        <option value="25">Last 25 episodes</option>
+                    </select>
+                </div>
+                <div class="flex space-x-3">
+                    <button id="fetchMoreConfirm" class="themed-button-primary px-4 py-2 rounded-md flex-1">
+                        Fetch Episodes
+                    </button>
+                    <button id="fetchMoreCancel" class="themed-button-secondary px-4 py-2 rounded-md flex-1">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <audio id="audioPlayer" class="hidden"></audio>
         
         <footer class="fixed bottom-0 left-0 right-0 p-4 themed border-t" style="border-color: var(--bg-tertiary-hover)">
@@ -475,6 +501,11 @@
         const manageFeedLimit = document.getElementById('manageFeedLimit');
         const addManageFeedBtn = document.getElementById('addManageFeedBtn');
         const refreshManageFeedsBtn = document.getElementById('refreshManageFeedsBtn');
+        const fetchMoreModal = document.getElementById('fetchMoreModal');
+        const fetchModalPodcastName = document.getElementById('fetchModalPodcastName');
+        const fetchCount = document.getElementById('fetchCount');
+        const fetchMoreConfirm = document.getElementById('fetchMoreConfirm');
+        const fetchMoreCancel = document.getElementById('fetchMoreCancel');
         const rssFeedsContainer = document.getElementById('rssFeedsContainer');
         const rssFeedsList = document.getElementById('rssFeedsList');
         
@@ -1248,6 +1279,37 @@ service firebase.storage {
                 loadManageFeeds();
             });
 
+            // Fetch more episodes modal handlers
+            fetchMoreCancel.addEventListener('click', () => {
+                fetchMoreModal.classList.add('hidden');
+            });
+
+            fetchMoreConfirm.addEventListener('click', async () => {
+                const feedId = fetchMoreModal.dataset.feedId;
+                const feedUrl = fetchMoreModal.dataset.feedUrl;
+                const feedTitle = fetchMoreModal.dataset.feedTitle;
+                const count = parseInt(fetchCount.value);
+                
+                fetchMoreModal.classList.add('hidden');
+                
+                fetchMoreConfirm.disabled = true;
+                fetchMoreConfirm.textContent = 'Fetching...';
+                
+                try {
+                    await fetchOlderEpisodes(feedId, feedUrl, feedTitle, count);
+                } finally {
+                    fetchMoreConfirm.disabled = false;
+                    fetchMoreConfirm.textContent = 'Fetch Episodes';
+                }
+            });
+
+            // Close modal when clicking outside
+            fetchMoreModal.addEventListener('click', (e) => {
+                if (e.target === fetchMoreModal) {
+                    fetchMoreModal.classList.add('hidden');
+                }
+            });
+
             setupSettingsModal();
             loadInitialConfig();
         });
@@ -1407,7 +1469,10 @@ service firebase.storage {
                             </div>
                         </div>
                         <div class="flex space-x-2">
-                            <button onclick="refreshSingleFeed('${doc.id}')" class="themed-button-secondary px-3 py-1 rounded text-sm">
+                            <button onclick="showFetchMoreModal('${doc.id}', '${feedTitle}', '${feed.url}')" class="themed-button-primary px-3 py-1 rounded text-sm">
+                                Fetch More
+                            </button>
+                            <button onclick="refreshSingleFeed('${doc.id}')" class="themed-button-secondary px-3 py-1 rounded text-sm" id="refresh-${doc.id}">
                                 Refresh
                             </button>
                             <button onclick="deleteFeed('${doc.id}')" class="themed-button-danger px-3 py-1 rounded text-sm">
@@ -1496,9 +1561,84 @@ service firebase.storage {
             }
         }
 
+        // Show fetch more episodes modal
+        window.showFetchMoreModal = function(feedId, feedTitle, feedUrl) {
+            fetchModalPodcastName.textContent = feedTitle;
+            fetchMoreModal.classList.remove('hidden');
+            
+            // Store feed info for later use
+            fetchMoreModal.dataset.feedId = feedId;
+            fetchMoreModal.dataset.feedUrl = feedUrl;
+            fetchMoreModal.dataset.feedTitle = feedTitle;
+        }
+
+        // Fetch older episodes
+        async function fetchOlderEpisodes(feedId, feedUrl, feedTitle, count) {
+            try {
+                showNotification(`Fetching ${count} older episodes from ${feedTitle}...`, 'info');
+                
+                // Get existing episode URLs to avoid duplicates
+                const podcastsCol = collection(db, 'podcasts-data', 'public', 'podcasts');
+                const existingPodcasts = await getDocs(podcastsCol);
+                const existingUrls = new Set();
+                existingPodcasts.forEach(doc => {
+                    existingUrls.add(doc.data().url);
+                });
+                
+                // Parse feed with requested count
+                const feedData = await parseRSSFeed(feedUrl, count);
+                const { episodes } = feedData;
+                let newEpisodes = 0;
+                
+                for (const episode of episodes) {
+                    if (!existingUrls.has(episode.url)) {
+                        await addDoc(collection(db, 'podcasts-data', 'public', 'podcasts'), {
+                            name: episode.title,
+                            description: episode.description,
+                            url: episode.url,
+                            artworkUrl: episode.artworkUrl,
+                            podcastTitle: episode.podcastTitle,
+                            uploadedAt: serverTimestamp(),
+                            playbackPosition: 0,
+                            duration: 0,
+                            isPlayed: false,
+                            source: 'rss'
+                        });
+                        newEpisodes++;
+                    }
+                }
+                
+                // Update feed's last checked timestamp
+                await updateDoc(doc(db, 'rss_feeds', feedId), {
+                    lastChecked: serverTimestamp()
+                });
+                
+                loadManageFeeds();
+                loadRssEpisodes();
+                
+                if (newEpisodes > 0) {
+                    showNotification(`Successfully fetched ${newEpisodes} new episodes from ${feedTitle}!`, 'success');
+                } else {
+                    showNotification(`All ${count} episodes are already in your library`, 'info');
+                }
+                
+            } catch (error) {
+                console.error('Fetch older episodes failed:', error);
+                showNotification(`Failed to fetch episodes: ${error.message}`, 'error');
+            }
+        }
+
         // Refresh single RSS feed - make it globally accessible
         window.refreshSingleFeed = async function(feedId) {
+            const refreshBtn = document.getElementById(`refresh-${feedId}`);
+            
             try {
+                // Update button to show loading state
+                if (refreshBtn) {
+                    refreshBtn.textContent = 'Refreshing...';
+                    refreshBtn.disabled = true;
+                }
+                
                 const feedDoc = await getDoc(doc(db, 'rss_feeds', feedId));
                 if (!feedDoc.exists()) {
                     showNotification('Feed not found', 'error');
@@ -1548,12 +1688,18 @@ service firebase.storage {
                     loadRssEpisodes();
                     showNotification(`Found ${newEpisodes} new episodes from ${feed.title || feed.url}!`, 'success');
                 } else {
-                    showNotification('No new episodes found', 'info');
+                    showNotification(`No new episodes found for ${feed.title || feed.url}`, 'info');
                 }
                 
             } catch (error) {
                 console.error('Single feed refresh failed:', error);
                 showNotification(`Failed to refresh feed: ${error.message}`, 'error');
+            } finally {
+                // Reset button state
+                if (refreshBtn) {
+                    refreshBtn.textContent = 'Refresh';
+                    refreshBtn.disabled = false;
+                }
             }
         }
 
