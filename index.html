@@ -1050,8 +1050,11 @@ service firebase.storage {
             }
 
             try {
-                fileLabel.textContent = "Analyzing...";
-                fileLabel.classList.add('cursor-not-allowed', 'opacity-50');
+                const fileLabel = document.getElementById('fileLabel');
+                if (fileLabel) {
+                    fileLabel.textContent = "Analyzing...";
+                    fileLabel.classList.add('cursor-not-allowed', 'opacity-50');
+                }
                 fileInput.disabled = true;
 
                 const [intelligentName, metadata] = await Promise.all([
@@ -1061,18 +1064,18 @@ service firebase.storage {
                 
                 let finalArtworkUrl = metadata.artworkUrl;
                 if (finalArtworkUrl) {
-                    fileLabel.textContent = "Uploading Artwork...";
+                    if (fileLabel) fileLabel.textContent = "Uploading Artwork...";
                     finalArtworkUrl = await uploadArtwork(finalArtworkUrl, `artwork_${Date.now()}.png`);
                 } else if (currentConfig.geminiApiKey) {
-                    fileLabel.textContent = "Creating Artwork...";
+                    if (fileLabel) fileLabel.textContent = "Creating Artwork...";
                     const generatedArtBase64 = await generateArtwork(intelligentName);
                     if(generatedArtBase64) {
-                        fileLabel.textContent = "Uploading Artwork...";
+                        if (fileLabel) fileLabel.textContent = "Uploading Artwork...";
                         finalArtworkUrl = await uploadArtwork(generatedArtBase64, `artwork_${Date.now()}.png`);
                     }
                 }
 
-                fileLabel.textContent = "Uploading Audio...";
+                if (fileLabel) fileLabel.textContent = "Uploading Audio...";
 
                 const progressContainer = document.getElementById('uploadProgressContainer');
                 const progressBar = document.getElementById('uploadProgressBar');
@@ -1083,34 +1086,46 @@ service firebase.storage {
                 const uploadTask = uploadBytesResumable(ref(storage, storagePath), file);
 
                 uploadTask.on('state_changed', 
-                    snapshot => progressBar.style.width = `${(snapshot.bytesTransferred / snapshot.totalBytes) * 100}%`,
+                    snapshot => {
+                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                        progressBar.style.width = `${progress}%`;
+                        if (fileLabel) fileLabel.textContent = `Uploading... ${Math.round(progress)}%`;
+                    },
                     error => { 
                         console.error("Upload failed:", error);
                         showNotification(`Upload failed: ${error.code}. Check Storage Rules.`, "error"); 
                         resetUploadUI(); 
                     }, 
-                    () => getDownloadURL(uploadTask.snapshot.ref).then(url => {
-                        const tempAudio = document.createElement('audio');
-                        tempAudio.src = URL.createObjectURL(file);
-                        tempAudio.onloadedmetadata = async () => {
-                            const newOrderIndex = Object.keys(podcastsData).length;
-                            await addDoc(collection(db, 'podcasts-data', 'public', 'podcasts'), { 
-                                name: intelligentName, 
-                                url, 
-                                storagePath, 
-                                playbackPosition: 0, 
-                                duration: tempAudio.duration, 
-                                uploadedAt: serverTimestamp(), 
-                                uploader: userId,
-                                order: newOrderIndex,
-                                artworkUrl: finalArtworkUrl,
-                                description: metadata.description,
-                                isPlayed: false
-                            });
-                            showNotification("Podcast uploaded!", "success");
+                    async () => {
+                        try {
+                            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                            if (fileLabel) fileLabel.textContent = "Finalizing...";
+                            
+                            const tempAudio = document.createElement('audio');
+                            tempAudio.src = URL.createObjectURL(file);
+                            tempAudio.onloadedmetadata = async () => {
+                                await addDoc(collection(db, 'podcasts-data', 'public', 'podcasts'), { 
+                                    name: intelligentName, 
+                                    url: downloadURL, 
+                                    storagePath, 
+                                    playbackPosition: 0, 
+                                    duration: tempAudio.duration, 
+                                    uploadedAt: serverTimestamp(), 
+                                    uploader: userId,
+                                    artworkUrl: finalArtworkUrl,
+                                    description: metadata.description,
+                                    isPlayed: false,
+                                    source: 'upload'
+                                });
+                                showNotification("Upload successful!", "success");
+                                resetUploadUI();
+                            };
+                        } catch (error) {
+                            console.error('Error completing upload:', error);
+                            showNotification('Upload failed: ' + error.message, 'error');
                             resetUploadUI();
-                        };
-                    })
+                        }
+                    }
                 );
             } catch (error) {
                 console.error('Upload error:', error);
