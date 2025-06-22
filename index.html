@@ -1060,83 +1060,62 @@ service firebase.storage {
                 ]);
                 
                 let finalArtworkUrl = metadata.artworkUrl;
-                if (!finalArtworkUrl) {
-                    fileLabel.textContent = "Generating Artwork...";
-                    finalArtworkUrl = await generateArtwork(intelligentName);
+                if (finalArtworkUrl) {
+                    fileLabel.textContent = "Uploading Artwork...";
+                    finalArtworkUrl = await uploadArtwork(finalArtworkUrl, `artwork_${Date.now()}.png`);
+                } else if (currentConfig.geminiApiKey) {
+                    fileLabel.textContent = "Creating Artwork...";
+                    const generatedArtBase64 = await generateArtwork(intelligentName);
+                    if(generatedArtBase64) {
+                        fileLabel.textContent = "Uploading Artwork...";
+                        finalArtworkUrl = await uploadArtwork(generatedArtBase64, `artwork_${Date.now()}.png`);
+                    }
                 }
 
-                fileLabel.textContent = "Uploading File...";
-                const storageRef = ref(storage, `podcasts/${userId}/${Date.now()}_${file.name}`);
-                const uploadTask = uploadBytesResumable(storageRef, file);
+                fileLabel.textContent = "Uploading Audio...";
 
                 const progressContainer = document.getElementById('uploadProgressContainer');
                 const progressBar = document.getElementById('uploadProgressBar');
                 progressContainer.style.display = 'block';
+                progressBar.style.width = '0%';
 
-                uploadTask.on('state_changed',
-                    (snapshot) => {
-                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                        progressBar.style.width = progress + '%';
-                        fileLabel.textContent = `Uploading... ${Math.round(progress)}%`;
-                    },
-                    (error) => {
-                        console.error('Upload failed:', error);
-                        showNotification('Upload failed: ' + error.message, 'error');
-                        resetUploadUI();
-                    },
-                    async () => {
-                        try {
-                            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                            
-                            fileLabel.textContent = "Finalizing...";
-                            
-                            await addDoc(collection(db, 'podcasts-data', 'public', 'podcasts'), {
-                                name: intelligentName,
-                                url: downloadURL,
-                                uploadedAt: serverTimestamp(),
-                                playbackPosition: 0,
-                                duration: 0,
-                                storagePath: uploadTask.snapshot.ref.fullPath,
+                const storagePath = `podcasts/${Date.now()}-${file.name}`;
+                const uploadTask = uploadBytesResumable(ref(storage, storagePath), file);
+
+                uploadTask.on('state_changed', 
+                    snapshot => progressBar.style.width = `${(snapshot.bytesTransferred / snapshot.totalBytes) * 100}%`,
+                    error => { 
+                        console.error("Upload failed:", error);
+                        showNotification(`Upload failed: ${error.code}. Check Storage Rules.`, "error"); 
+                        resetUploadUI(); 
+                    }, 
+                    () => getDownloadURL(uploadTask.snapshot.ref).then(url => {
+                        const tempAudio = document.createElement('audio');
+                        tempAudio.src = URL.createObjectURL(file);
+                        tempAudio.onloadedmetadata = async () => {
+                            const newOrderIndex = Object.keys(podcastsData).length;
+                            await addDoc(collection(db, 'podcasts-data', 'public', 'podcasts'), { 
+                                name: intelligentName, 
+                                url, 
+                                storagePath, 
+                                playbackPosition: 0, 
+                                duration: tempAudio.duration, 
+                                uploadedAt: serverTimestamp(), 
+                                uploader: userId,
+                                order: newOrderIndex,
                                 artworkUrl: finalArtworkUrl,
                                 description: metadata.description,
-                                source: 'upload'
+                                isPlayed: false
                             });
-
-                            showNotification('Upload successful!', 'success');
+                            showNotification("Podcast uploaded!", "success");
                             resetUploadUI();
-                        } catch (error) {
-                            console.error('Error saving to database:', error);
-                            showNotification('Upload failed: ' + error.message, 'error');
-                            resetUploadUI();
-                        }
-                    }
+                        };
+                    })
                 );
             } catch (error) {
                 console.error('Upload error:', error);
                 showNotification('Upload failed: ' + error.message, 'error');
                 resetUploadUI();
-            }
-        }
-        
-        async function uploadArtwork(artworkData, fileName) {
-            if (!artworkData) return null;
-            
-            try {
-                let blob;
-                if (artworkData.startsWith('data:')) {
-                    // Convert base64 to blob
-                    const response = await fetch(artworkData);
-                    blob = await response.blob();
-                } else {
-                    blob = artworkData;
-                }
-                
-                const storageRef = ref(storage, `artwork/${userId}/${fileName}`);
-                const uploadTask = await uploadBytesResumable(storageRef, blob);
-                return await getDownloadURL(uploadTask.ref);
-            } catch (error) {
-                console.error('Artwork upload failed:', error);
-                return null;
             }
         }
         
