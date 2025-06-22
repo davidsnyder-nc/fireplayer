@@ -307,7 +307,7 @@
             <!-- Tab Navigation -->
             <div class="flex border-b border-gray-600 mb-6">
                 <button id="libraryTab" class="tab-button px-4 py-2 font-semibold themed-text-accent border-b-2 border-orange-500">
-                    My Library
+                    My Audio
                 </button>
                 <button id="rssEpisodesTab" class="tab-button px-4 py-2 font-semibold themed-text-secondary hover:themed-text-accent">
                     RSS Episodes
@@ -320,7 +320,7 @@
             <!-- Library Content -->
             <div id="libraryContent">
                 <div id="podcastListContainer">
-                    <p id="loadingMessage" class="themed-text-secondary text-center py-4">Your library is empty. Upload your first podcast!</p>
+                    <p id="loadingMessage" class="themed-text-secondary text-center py-4">Your audio library is empty. Upload your first podcast!</p>
                 </div>
                 
                 <div id="playedContainer" class="mt-12 hidden">
@@ -352,6 +352,12 @@
                                 <input type="text" id="manageFeedInput" placeholder="Paste an RSS Feed URL here..." class="w-full flex-grow themed-input rounded-md px-4 py-3">
                                 <input type="number" id="manageFeedLimit" min="1" max="10" value="5" class="w-20 themed-input rounded-md px-4 py-3">
                                 <button id="addManageFeedBtn" class="w-full sm:w-auto flex-shrink-0 themed-button-secondary font-bold py-3 px-6 rounded-md">Import</button>
+                            </div>
+                            <div class="mt-4 flex items-center">
+                                <label class="flex items-center cursor-pointer">
+                                    <input type="checkbox" id="addToMyAudio" class="themed-checkbox mr-2">
+                                    <span class="text-sm themed-text-secondary">Add episodes to My Audio instead of RSS Episodes</span>
+                                </label>
                             </div>
                         </div>
                     </div>
@@ -923,10 +929,10 @@ service firebase.storage {
                 
                 // Sort by upload date (newest first) - prioritize user uploads
                 libraryPodcasts.sort((a, b) => {
-                    // First, prioritize user uploads over RSS
+                    // First, prioritize manually uploaded files over RSS feeds assigned to My Audio
                     if (a.source !== b.source) {
-                        if (a.source === 'upload' && b.source !== 'upload') return -1;
-                        if (a.source !== 'upload' && b.source === 'upload') return 1;
+                        if (a.source === 'upload' && !a.podcastTitle && b.source === 'upload' && b.podcastTitle) return -1;
+                        if (a.source === 'upload' && a.podcastTitle && b.source === 'upload' && !b.podcastTitle) return 1;
                     }
                     // Then sort by date (newest first)
                     const dateA = a.uploadedAt?.toDate?.() || new Date(0);
@@ -935,7 +941,7 @@ service firebase.storage {
                 });
                 
                 console.log('Total podcasts found:', allPodcasts.length);
-                console.log('Library podcasts (non-RSS):', libraryPodcasts.length);
+                console.log('My Audio podcasts:', libraryPodcasts.length);
                 
                 const activePodcasts = libraryPodcasts.filter(p => !p.isPlayed);
                 const playedPodcasts = libraryPodcasts.filter(p => p.isPlayed);
@@ -943,7 +949,7 @@ service firebase.storage {
                 podcastsData = Object.fromEntries(allPodcasts.map(p => [p.id, p]));
                 
                 if (libraryPodcasts.length === 0) {
-                    loadingMessage.textContent = 'Your library is empty. Upload your first podcast!';
+                    loadingMessage.textContent = 'Your audio library is empty. Upload your first podcast!';
                     loadingMessage.style.display = 'block';
                 } else {
                     loadingMessage.style.display = 'none';
