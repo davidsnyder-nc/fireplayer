@@ -846,7 +846,19 @@ service firebase.storage {
                 
                 // Filter out RSS episodes (only show files without source='rss' or no source field)
                 let libraryPodcasts = allPodcasts.filter(p => !p.source || p.source !== 'rss');
-                libraryPodcasts.sort((a, b) => (a.order ?? Infinity) - (b.order ?? Infinity));
+                
+                // Sort by upload date (newest first) - prioritize user uploads
+                libraryPodcasts.sort((a, b) => {
+                    // First, prioritize user uploads over RSS
+                    if (a.source !== b.source) {
+                        if (a.source === 'upload' && b.source !== 'upload') return -1;
+                        if (a.source !== 'upload' && b.source === 'upload') return 1;
+                    }
+                    // Then sort by date (newest first)
+                    const dateA = a.uploadedAt?.toDate?.() || new Date(0);
+                    const dateB = b.uploadedAt?.toDate?.() || new Date(0);
+                    return dateB - dateA; // Newest first
+                });
                 
                 console.log('Total podcasts found:', allPodcasts.length);
                 console.log('Library podcasts (non-RSS):', libraryPodcasts.length);
