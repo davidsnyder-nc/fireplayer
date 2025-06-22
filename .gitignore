@@ -1,0 +1,26 @@
+# Firebase config with actual credentials
+# firebase-config.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# Node modules (if using build tools)
+node_modules/
+
+# Build outputs
+dist/
+build/

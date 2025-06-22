@@ -1,9 +1,9 @@
 {
-  "apiKey": "AIzaSyBnm5JK-SgBXfewwdYFulfYyyv3bQM1dEg",
-  "authDomain": "ai-podcasts-14de0.firebaseapp.com",
-  "projectId": "ai-podcasts-14de0",
-  "storageBucket": "ai-podcasts-14de0.firebasestorage.app",
-  "messagingSenderId": "1022452619474",
-  "appId": "1:1022452619474:web:888329d84c9429a407350b",
-  "geminiApiKey": "AIzaSyBFycr-cXkRD9MOtSpGjpAqFTLGSpT_ZEg"
+  "apiKey": "your-firebase-api-key",
+  "authDomain": "your-project.firebaseapp.com",
+  "projectId": "your-project-id",
+  "storageBucket": "your-project.appspot.com",
+  "messagingSenderId": "123456789012",
+  "appId": "1:123456789012:web:abcdef123456789012345678",
+  "geminiApiKey": "your-gemini-api-key-optional"
 }
