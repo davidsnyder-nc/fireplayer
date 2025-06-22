@@ -191,6 +191,16 @@
             transform: scale(1.1);
         }
         
+        /* Header glow effect */
+        @keyframes glow {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.6; }
+        }
+        
+        .glow {
+            animation: glow 3s ease-in-out infinite;
+        }
+        
         /* Currently playing item styling */
         .currently-playing {
             border: 2px solid #f97316 !important;
@@ -253,20 +263,37 @@
     </div>
 
     <div id="app" class="container mx-auto max-w-4xl p-4 sm:p-6 lg:p-8 pb-24">
-        <header class="mb-6">
-            <div class="flex justify-between items-center">
-                <div class="flex items-center gap-3">
-                    <img src="logo.png"
-                         alt="Fire Player Logo"
-                         class="h-8 w-8"
-                         style="object-fit: contain;"
-                         onerror="this.onerror=null; this.src='https://cdn.pixabay.com/photo/2022/07/21/11/48/fire-7336074_960_720.png';">
-                    <h1 class="text-2xl font-bold themed-text-accent whitespace-nowrap">Fire Player</h1>
-                </div>
-                <div class="flex items-center gap-3">
-                    <button id="showUploadFormBtn" class="themed-button-primary font-bold py-2 px-4 rounded-md transition-transform duration-200 transform hover:scale-105">
-                        Add New
-                    </button>
+        <header class="mb-8">
+            <div class="themed rounded-xl p-6 shadow-xl border border-opacity-20">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center gap-4">
+                        <div class="relative">
+                            <div class="absolute inset-0 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl blur-lg glow"></div>
+                            <div class="relative bg-gradient-to-r from-orange-500 to-red-500 p-3 rounded-xl shadow-lg">
+                                <img src="logo.png"
+                                     alt="Fire Player Logo"
+                                     class="h-8 w-8 brightness-0 invert"
+                                     style="object-fit: contain;"
+                                     onerror="this.onerror=null; this.innerHTML='🔥'; this.style.fontSize='2rem'; this.style.display='flex'; this.style.alignItems='center'; this.style.justifyContent='center';"
+                            </div>
+                        </div>
+                        <div>
+                            <h1 class="text-3xl font-bold bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent">
+                                Fire Player
+                            </h1>
+                            <p class="text-sm themed-text-secondary">Your Personal Audio Collection</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button id="showUploadFormBtn" class="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-bold py-3 px-6 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl">
+                            <span class="flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                </svg>
+                                Add New
+                            </span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </header>
