@@ -1941,6 +1941,16 @@ service firebase.storage {
                 const isPlayed = podcast.isPlayed;
                 const progressPercent = (podcast.duration > 0) ? (podcast.playbackPosition / podcast.duration) * 100 : 0;
                 
+                // Update playing state visual feedback
+                const podcastItem = element.closest('.podcast-item');
+                if (podcastItem) {
+                    if (isPlaying) {
+                        podcastItem.classList.add('currently-playing');
+                    } else {
+                        podcastItem.classList.remove('currently-playing');
+                    }
+                }
+                
                 const playButton = element.querySelector('.play-pause-btn');
                 if(playButton) {
                     const playButtonIcon = isPlayed ? replayIconSVG : (isPlaying ? pauseIconSVG : playIconSVG);
