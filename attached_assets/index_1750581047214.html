@@ -1,0 +1,1339 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fire Player</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #111827;
+            --bg-secondary: #1f2937;
+            --bg-tertiary: #374151;
+            --bg-tertiary-hover: #4b5563;
+            --text-primary: #ffffff;
+            --text-secondary: #9ca3af;
+            --text-accent: #fb923c;
+            --accent-primary: #f97316;
+            --accent-primary-hover: #ea580c;
+            --accent-danger: #dc2626;
+            --accent-danger-hover: #b91c1c;
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #f9fafb;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #e5e7eb;
+            --bg-tertiary-hover: #d1d5db;
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --text-accent: #f97316;
+            --accent-primary: #f97316;
+            --accent-primary-hover: #ea580c;
+            --accent-danger: #ef4444;
+            --accent-danger-hover: #dc2626;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            transition: background-color 0.3s, color 0.3s;
+            padding-bottom: 80px; 
+            overflow-x: hidden;
+            position: relative;
+        }
+        
+        #background-effects {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        .smoke {
+            position: absolute;
+            bottom: -200px;
+            background: rgba(251, 146, 60, 0.05);
+            border-radius: 50%;
+            filter: blur(60px);
+            animation-timing-function: linear;
+            animation-iteration-count: infinite;
+        }
+
+        .smoke-1 {
+            width: 300px;
+            height: 300px;
+            left: 5%;
+            animation-name: smoke-rise-1;
+            animation-duration: 25s;
+        }
+
+        .smoke-2 {
+            width: 400px;
+            height: 400px;
+            left: 40%;
+            animation-name: smoke-rise-2;
+            animation-duration: 35s;
+            animation-delay: 5s;
+        }
+        
+        .smoke-3 {
+            width: 250px;
+            height: 250px;
+            left: 75%;
+            animation-name: smoke-rise-3;
+            animation-duration: 20s;
+            animation-delay: 10s;
+        }
+        
+        @keyframes smoke-rise-1 {
+            0% { transform: translateY(0) scale(1) translateX(0); opacity: 0; }
+            20% { opacity: 0.1; }
+            100% { transform: translateY(-120vh) scale(1.8) translateX(20px); opacity: 0; }
+        }
+        @keyframes smoke-rise-2 {
+            0% { transform: translateY(0) scale(1) translateX(0); opacity: 0; }
+            20% { opacity: 0.08; }
+            100% { transform: translateY(-120vh) scale(1.6) translateX(-30px); opacity: 0; }
+        }
+        @keyframes smoke-rise-3 {
+            0% { transform: translateY(0) scale(1) translateX(0); opacity: 0; }
+            20% { opacity: 0.12; }
+            100% { transform: translateY(-120vh) scale(1.9) translateX(10px); opacity: 0; }
+        }
+
+        .themed {
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            border-color: var(--bg-tertiary);
+        }
+        .themed-input, textarea.themed-input {
+             background-color: var(--bg-tertiary);
+             color: var(--text-primary);
+        }
+        .themed-input::placeholder {
+            color: var(--text-secondary);
+        }
+        .themed-button-primary {
+            background-color: var(--accent-primary);
+            color: white;
+        }
+        .themed-button-primary:hover {
+            background-color: var(--accent-primary-hover);
+        }
+        .themed-button-secondary {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+        .themed-button-secondary:hover {
+            background-color: var(--bg-tertiary-hover);
+        }
+        .themed-button-danger {
+            background-color: var(--accent-danger);
+            color: white;
+        }
+        .themed-button-danger:hover {
+            background-color: var(--accent-danger-hover);
+        }
+        .themed-text-accent { color: var(--text-accent); }
+        .themed-text-secondary { color: var(--text-secondary); }
+        .themed-icon-button { color: var(--text-secondary); }
+        .themed-icon-button:hover { color: var(--text-accent); }
+        .control-active {
+            color: var(--text-accent) !important;
+        }
+        .dragging {
+            opacity: 0.5;
+            background-color: var(--bg-tertiary);
+        }
+        .scrubber-handle {
+            width: 1rem;
+            height: 1rem;
+            border-radius: 50%;
+            background-color: white;
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            margin-left: -0.5rem; 
+            cursor: grab;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .progress-bar-wrapper:hover .scrubber-handle {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <div id="background-effects">
+        <div class="smoke smoke-1"></div>
+        <div class="smoke smoke-2"></div>
+        <div class="smoke smoke-3"></div>
+    </div>
+
+    <div id="app" class="container mx-auto max-w-4xl p-4 sm:p-6 lg:p-8">
+        <header class="mb-8 flex justify-center items-center">
+            <div class="text-center flex items-center gap-2">
+                 <img src="logo.png"
+                      alt="Fire Player Logo"
+                      class="h-10 w-10"
+                      style="object-fit: contain;"
+                      onerror="this.onerror=null; this.src='https://cdn.pixabay.com/photo/2022/07/21/11/48/fire-7336074_960_720.png';">
+                 <h1 class="text-3xl sm:text-4xl font-bold themed-text-accent whitespace-nowrap">Fire Player</h1>
+            </div>
+        </header>
+
+        <div class="flex justify-between items-center mb-4">
+            <div id="uploadContainer">
+                <button id="showUploadFormBtn" class="themed-button-primary font-bold py-2 px-4 rounded-md transition-transform duration-200 transform hover:scale-105">
+                    Add New
+                </button>
+            </div>
+            <div class="flex items-center gap-2">
+                <button id="viewToggleBtn" class="themed-icon-button p-2 rounded-full">
+                    <svg id="icon-grid-view" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+                    <svg id="icon-list-view" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
+                </button>
+            </div>
+        </div>
+
+        <div id="uploadSection" class="themed rounded-lg p-6 mb-8 shadow-lg hidden">
+            <h2 class="text-2xl font-semibold mb-4">Add New Podcast</h2>
+            <div class="space-y-4">
+                 <div>
+                    <label for="fileInput" class="w-full flex-grow themed-button-secondary font-bold py-3 px-6 rounded-md cursor-pointer hover:bg-gray-600 transition-colors duration-200 truncate block text-center">
+                        Choose File to Upload...
+                    </label>
+                     <input type="file" id="fileInput" accept="audio/*" class="hidden">
+                 </div>
+                 <div class="flex items-center space-x-2">
+                    <hr class="flex-grow border-t border-gray-600">
+                    <span class="themed-text-secondary">OR</span>
+                    <hr class="flex-grow border-t border-gray-600">
+                 </div>
+                 <div>
+                    <label for="urlInput" class="block text-sm font-medium themed-text-secondary mb-1">Import from URL</label>
+                    <div class="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4">
+                        <input type="text" id="urlInput" placeholder="Paste an audio URL here..." class="w-full flex-grow themed-input rounded-md px-4 py-3">
+                        <button id="importUrlBtn" class="w-full sm:w-auto flex-shrink-0 themed-button-secondary font-bold py-3 px-6 rounded-md">Import</button>
+                    </div>
+                </div>
+                 <div class="flex items-center space-x-2">
+                    <hr class="flex-grow border-t border-gray-600">
+                    <span class="themed-text-secondary">OR</span>
+                    <hr class="flex-grow border-t border-gray-600">
+                 </div>
+                 <div>
+                     <label for="rssInput" class="block text-sm font-medium themed-text-secondary mb-1">Add RSS Feed</label>
+                    <div class="mt-1 flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4">
+                        <input type="text" id="rssInput" placeholder="Paste an RSS Feed URL here..." class="w-full flex-grow themed-input rounded-md px-4 py-3">
+                        <input type="number" id="rssLimit" min="1" max="10" value="5" class="w-20 themed-input rounded-md px-4 py-3">
+                        <button id="addRssBtn" class="w-full sm:w-auto flex-shrink-0 themed-button-secondary font-bold py-3 px-6 rounded-md">Add Feed</button>
+                    </div>
+                 </div>
+            </div>
+            <div id="uploadProgressContainer" class="mt-4 hidden">
+                 <div class="w-full bg-gray-700 rounded-full h-2.5">
+                    <div id="uploadProgressBar" class="h-2.5 rounded-full" style="width: 0%; background-color: var(--text-accent);"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="rssFeedsContainer" class="mb-8 hidden">
+             <h2 class="text-2xl font-semibold mb-4">My Feeds</h2>
+             <div id="rssFeedsList" class="space-y-2"></div>
+        </div>
+
+        <div>
+            <h2 id="libraryTitle" class="text-2xl font-semibold mb-4 hidden">My Library</h2>
+            <div id="podcastListContainer">
+                <p id="loadingMessage" class="themed-text-secondary text-center py-4">Initializing...</p>
+            </div>
+        </div>
+
+        <div id="playedContainer" class="mt-12 hidden">
+            <h2 id="playedTitle" class="text-2xl font-semibold mb-4">Played</h2>
+            <div id="playedListContainer"></div>
+        </div>
+
+        <audio id="audioPlayer" class="hidden"></audio>
+        
+        <footer class="fixed bottom-0 left-0 right-0 p-4 themed border-t" style="border-color: var(--bg-tertiary-hover)">
+            <div class="container mx-auto max-w-2xl flex justify-around items-center">
+                 <button id="themeToggleButton" class="themed-icon-button p-2 rounded-full transition-colors">
+                    <svg id="theme-icon-dark" xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                    </svg>
+                    <svg id="theme-icon-light" xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                </button>
+                 <button id="shuffleButton" class="themed-icon-button p-2 rounded-full transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-shuffle"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line><line x1="4" y1="4" x2="9" y2="9"></line></svg>
+                 </button>
+                  <button id="repeatButton" class="themed-icon-button p-2 rounded-full transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-repeat"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>
+                  </button>
+                 <button id="speedControlButton" class="themed-icon-button p-2 rounded-full transition-colors font-bold text-lg w-16 h-12 flex items-center justify-center">1x</button>
+                 <button id="settingsButton" class="themed-icon-button p-2 rounded-full transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                </button>
+            </div>
+        </footer>
+
+        <div id="messageBox" class="fixed bottom-24 right-5 bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg opacity-0 transition-opacity duration-300 z-50">
+            <p id="messageText"></p>
+        </div>
+        
+        <div id="deleteModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center hidden z-50">
+            <div class="themed rounded-lg p-8 shadow-2xl max-w-sm mx-auto">
+                <h3 class="text-xl font-bold mb-4">Confirm Deletion</h3>
+                <p class="themed-text-secondary mb-6">Are you sure you want to delete "<span id="podcastNameToDelete"></span>"? This action cannot be undone.</p>
+                <div class="flex justify-end space-x-4">
+                    <button id="cancelDelete" class="themed-button-secondary font-bold py-2 px-4 rounded-md transition-colors">Cancel</button>
+                    <button id="confirmDelete" class="themed-button-danger font-bold py-2 px-4 rounded-md transition-colors">Delete</button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="settingsModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center hidden z-50 p-4">
+            <div class="themed rounded-lg p-8 shadow-2xl max-w-lg lg:max-w-4xl w-full mx-auto max-h-full overflow-y-auto">
+                <h3 class="text-xl font-bold mb-2">Setup & Configuration</h3>
+                
+                <div class="lg:flex lg:gap-8">
+                    <div class="lg:flex-1 mb-6 p-4 rounded-lg border" style="border-color: var(--accent-primary);">
+                        <h4 class="font-semibold mb-2 text-lg themed-text-accent">Step 1: Set Security Rules</h4>
+                        <p class="text-sm themed-text-secondary mb-4">This is a one-time setup. Copy and paste these rules into your Firebase project. The app cannot read or write data without them.</p>
+                        
+                        <div class="mb-4">
+                            <label class="block font-bold mb-1">Firestore Rules</label>
+                            <a href="https://console.firebase.google.com/u/0/project/ai-podcasts-14de0/firestore" target="_blank" class="text-xs themed-text-secondary hover:underline">Go to Firestore Page (create database if needed, then click Rules tab) &rarr;</a>
+                            <textarea id="firestoreRules" readonly class="w-full themed-input rounded-md p-3 h-28 mt-1 text-xs font-mono"></textarea>
+                            <button type="button" data-copy-target="firestoreRules" class="copy-btn mt-2 w-full themed-button-secondary font-bold py-2 px-4 rounded-md text-sm">Copy Rules</button>
+                        </div>
+
+                        <div>
+                            <label class="block font-bold mb-1">Storage Rules</label>
+                            <a href="https://console.firebase.google.com/u/0/project/ai-podcasts-14de0/storage" target="_blank" class="text-xs themed-text-secondary hover:underline">Go to Storage Page (click 'Get started' if needed, then click Rules tab) &rarr;</a>
+                            <textarea id="storageRules" readonly class="w-full themed-input rounded-md p-3 h-28 mt-1 text-xs font-mono"></textarea>
+                             <button type="button" data-copy-target="storageRules" class="copy-btn mt-2 w-full themed-button-secondary font-bold py-2 px-4 rounded-md text-sm">Copy Rules</button>
+                        </div>
+                    </div>
+
+                    <div class="lg:flex-1 mb-6">
+                        <h4 class="font-semibold mb-2 text-lg themed-text-accent">Step 2: Enter Credentials</h4>
+                        <p class="text-sm themed-text-secondary mb-4">Enter your keys below, or use the Import/Export feature to back them up.</p>
+                        
+                        <div id="importExportSection" class="mb-4">
+                            <textarea id="importExportArea" class="w-full themed-input rounded-md p-3 h-24 text-xs" placeholder="Paste exported settings here to import..."></textarea>
+                            <div class="flex gap-4 mt-2">
+                                 <button type="button" id="importSettingsBtn" class="flex-1 themed-button-secondary font-bold py-2 px-4 rounded-md transition-colors">Import</button>
+                                 <button type="button" id="exportSettingsBtn" class="flex-1 themed-button-secondary font-bold py-2 px-4 rounded-md transition-colors">Export</button>
+                            </div>
+                        </div>
+
+                        <form id="firebaseConfigForm" class="space-y-2">
+                            <input type="text" id="apiKey" placeholder="Firebase apiKey" class="w-full themed-input rounded-md p-3">
+                            <input type="text" id="authDomain" placeholder="Firebase authDomain" class="w-full themed-input rounded-md p-3">
+                            <input type="text" id="projectId" placeholder="Firebase projectId" class="w-full themed-input rounded-md p-3">
+                            <input type="text" id="storageBucket" placeholder="Firebase storageBucket" class="w-full themed-input rounded-md p-3">
+                            <input type="text" id="messagingSenderId" placeholder="Firebase messagingSenderId" class="w-full themed-input rounded-md p-3">
+                            <input type="text" id="appId" placeholder="Firebase appId" class="w-full themed-input rounded-md p-3">
+                            <div>
+                               <input type="password" id="geminiApiKey" placeholder="Gemini API Key (Optional)" class="w-full themed-input rounded-md p-3">
+                                <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-xs themed-text-secondary hover:underline ml-1">Get a Gemini API Key for AI features</a>
+                            </div>
+
+                            <div class="mt-4 p-3 rounded-md bg-orange-900 bg-opacity-50 border border-orange-500">
+                                <p class="text-sm text-orange-200">
+                                    <strong>Reminder:</strong> Anonymous sign-in must be enabled for the app to connect.
+                                    <a href="https://console.firebase.google.com/u/0/project/ai-podcasts-14de0/authentication/providers" target="_blank" class="font-bold text-white hover:underline">Check it here.</a>
+                                </p>
+                            </div>
+                            <div class="flex justify-end space-x-4 pt-4">
+                                <button type="button" id="closeSettings" class="themed-button-secondary font-bold py-2 px-4 rounded-md transition-colors">Close</button>
+                                <button type="submit" id="saveSettings" class="themed-button-primary font-bold py-2 px-4 rounded-md transition-colors">Save and Initialize</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, addDoc, onSnapshot, updateDoc, deleteDoc, serverTimestamp, terminate, writeBatch, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
+
+        let app, auth, db, storage, userId, currentPlayingId = null, updateTimer = null;
+        let podcastsData = {};
+        let firebaseAppInitialized = false;
+        let unsubscribeFromPodcasts = null;
+        let unsubscribeFromFeeds = null;
+        let currentConfig = {};
+        let viewMode = 'list';
+
+        const themeToggleButton = document.getElementById('themeToggleButton');
+        const fileInput = document.getElementById('fileInput');
+        const fileLabel = document.getElementById('fileLabel');
+        const uploadSection = document.getElementById('uploadSection');
+        const showUploadFormBtn = document.getElementById('showUploadFormBtn');
+        const podcastListContainer = document.getElementById('podcastListContainer');
+        const playedListContainer = document.getElementById('playedListContainer');
+        const playedContainer = document.getElementById('playedContainer');
+        const audioPlayer = document.getElementById('audioPlayer');
+        const loadingMessage = document.getElementById('loadingMessage');
+        const libraryTitle = document.getElementById('libraryTitle');
+        const messageBox = document.getElementById('messageBox');
+        const messageText = document.getElementById('messageText');
+        const deleteModal = document.getElementById('deleteModal');
+        const settingsModal = document.getElementById('settingsModal');
+        const settingsButton = document.getElementById('settingsButton');
+        const speedControlButton = document.getElementById('speedControlButton');
+        const shuffleButton = document.getElementById('shuffleButton');
+        const repeatButton = document.getElementById('repeatButton');
+        const closeSettings = document.getElementById('closeSettings');
+        const firebaseConfigForm = document.getElementById('firebaseConfigForm');
+        const viewToggleBtn = document.getElementById('viewToggleBtn');
+        const iconGridView = document.getElementById('icon-grid-view');
+        const iconListView = document.getElementById('icon-list-view');
+        const urlInput = document.getElementById('urlInput');
+        const importUrlBtn = document.getElementById('importUrlBtn');
+        const rssInput = document.getElementById('rssInput');
+        const addRssBtn = document.getElementById('addRssBtn');
+        const rssFeedsContainer = document.getElementById('rssFeedsContainer');
+        const rssFeedsList = document.getElementById('rssFeedsList');
+        
+        const importExportArea = document.getElementById('importExportArea');
+        const importSettingsBtn = document.getElementById('importSettingsBtn');
+        const exportSettingsBtn = document.getElementById('exportSettingsBtn');
+        const configKeys = ['apiKey', 'authDomain', 'projectId', 'storageBucket', 'messagingSenderId', 'appId', 'geminiApiKey'];
+
+        const playIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`;
+        const pauseIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`;
+        const replayIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h5" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12A8 8 0 1013.4 5.37" /></svg>`;
+        const moveToLibraryIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" /></svg>`;
+        const restartIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 19 2 12 11 5 11 19"></polygon><polygon points="22 19 13 12 22 5 22 19"></polygon></svg>`;
+        
+        const playbackSpeeds = [1, 1.25, 1.5, 2];
+        let currentSpeedIndex = 0;
+        let isShuffle = false;
+        let isRepeat = false;
+
+        function applyTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            const themeIconDark = document.getElementById('theme-icon-dark');
+            const themeIconLight = document.getElementById('theme-icon-light');
+            if (theme === 'light') {
+                themeIconDark.classList.add('hidden');
+                themeIconLight.classList.remove('hidden');
+            } else {
+                themeIconDark.classList.remove('hidden');
+                themeIconLight.classList.add('hidden');
+            }
+            localStorage.setItem('theme', theme);
+        }
+        
+        async function reinitializeFirebase(config) {
+            if (app) {
+                if (unsubscribeFromPodcasts) unsubscribeFromPodcasts();
+                 if (unsubscribeFromFeeds) unsubscribeFromFeeds();
+                if(db) await terminate(db).catch(e => console.error("DB termination error", e));
+                await deleteApp(app).catch(e => console.error("App deletion error", e));
+                firebaseAppInitialized = false;
+                app = null;
+            }
+            initializeFirebase(config);
+        }
+
+        async function initializeFirebase(config) {
+            if (firebaseAppInitialized) return;
+            
+            currentConfig = config;
+            const firebaseKeys = configKeys.filter(k => k !== 'geminiApiKey');
+            const missingKeys = firebaseKeys.filter(key => !config[key]);
+
+            if (missingKeys.length > 0) {
+                 loadingMessage.innerHTML = `Firebase config is incomplete. Missing: ${missingKeys.join(', ')}. <button id="openSettingsFromMsg" class="themed-text-accent underline">Update settings</button>.`;
+                 document.getElementById('openSettingsFromMsg').addEventListener('click', () => settingsModal.classList.remove('hidden'));
+                 firebaseAppInitialized = false;
+                 return;
+            }
+
+            try {
+                loadingMessage.textContent = 'Initializing Firebase...';
+                const fbConfig = {...config};
+                delete fbConfig.geminiApiKey;
+
+                app = initializeApp(fbConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+                storage = getStorage(app);
+                firebaseAppInitialized = true;
+                showUploadFormBtn.classList.remove('hidden');
+                setupAuthListener();
+                libraryTitle.classList.remove('hidden');
+            } catch (error) {
+                console.error("Firebase initialization failed:", error);
+                loadingMessage.innerHTML = `Firebase init failed: ${error.message}. <button id="openSettingsFromMsg" class="themed-text-accent underline">Check credentials</button>.`;
+                document.getElementById('openSettingsFromMsg').addEventListener('click', () => settingsModal.classList.remove('hidden'));
+                firebaseAppInitialized = false;
+            }
+        }
+
+        function setupAuthListener() {
+            onAuthStateChanged(auth, user => {
+                if (user) {
+                    userId = user.uid;
+                    loadPodcasts();
+                    loadRssFeeds();
+                } else {
+                    signInAnonymously(auth).catch(error => {
+                        console.error("Anonymous sign-in failed:", error);
+                        loadingMessage.innerHTML = `Authentication failed. <button id="openSettingsFromMsg" class="themed-text-accent underline">Check your settings</button> and ensure Anonymous Sign-In is enabled in Firebase.`;
+                        document.getElementById('openSettingsFromMsg').addEventListener('click', () => settingsModal.classList.remove('hidden'));
+                    });
+                }
+            });
+        }
+        
+        function getConfigFromForm() {
+            const config = {};
+            configKeys.forEach(key => config[key] = document.getElementById(key).value.trim());
+            return config;
+        }
+
+        function populateFormFromConfig(config) {
+            configKeys.forEach(key => {
+                const input = document.getElementById(key);
+                if (input) input.value = config[key] || '';
+            });
+        }
+        
+        function setupSettingsModal() {
+            document.getElementById('firestoreRules').value = `rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /podcasts-data/public/podcasts/{podcastId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    match /rss_feeds/{feedId} {
+        allow read, write: if request.auth != null;
+    }
+  }
+}`;
+            document.getElementById('storageRules').value = `rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /podcasts/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    match /artwork/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+  }
+}`;
+            document.querySelectorAll('.copy-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const targetId = e.currentTarget.dataset.copyTarget;
+                    const textarea = document.getElementById(targetId);
+                    textarea.select();
+                    try {
+                        document.execCommand('copy');
+                        showNotification('Rules copied to clipboard!', 'success');
+                    } catch (err) {
+                        showNotification('Copy failed. Please copy manually.', 'error');
+                    }
+                });
+            });
+
+            const saveAndClose = () => {
+                const configData = getConfigFromForm();
+                localStorage.setItem('firebaseConfig', JSON.stringify(configData));
+                showNotification('Configuration saved!', 'success');
+                settingsModal.classList.add('hidden');
+                reinitializeFirebase(configData);
+            };
+
+            firebaseConfigForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                saveAndClose();
+            });
+            
+            settingsModal.addEventListener('click', (e) => {
+                if (e.target === settingsModal) {
+                    saveAndClose();
+                }
+            });
+
+            exportSettingsBtn.addEventListener('click', () => {
+                const config = getConfigFromForm();
+                importExportArea.value = btoa(JSON.stringify(config));
+                importExportArea.select();
+                showNotification('Export text created!', 'success');
+            });
+            
+            importSettingsBtn.addEventListener('click', () => {
+                if (!importExportArea.value.trim()) return showNotification('Import area is empty.', 'error');
+                try {
+                    populateFormFromConfig(JSON.parse(atob(importExportArea.value.trim())));
+                    showNotification('Settings imported!', 'success');
+                } catch(e) {
+                    showNotification('Import failed. Invalid text.', 'error');
+                }
+            });
+
+            settingsButton.addEventListener('click', () => {
+                const storedConfig = JSON.parse(localStorage.getItem('firebaseConfig') || '{}');
+                populateFormFromConfig(storedConfig);
+                settingsModal.classList.remove('hidden');
+            });
+            closeSettings.addEventListener('click', () => settingsModal.classList.add('hidden'));
+        }
+
+        function loadPodcasts() {
+            if (!firebaseAppInitialized) return;
+            if (unsubscribeFromPodcasts) unsubscribeFromPodcasts(); 
+            
+            const podcastsCol = collection(db, 'podcasts-data', 'public', 'podcasts');
+            unsubscribeFromPodcasts = onSnapshot(podcastsCol, snapshot => {
+                let allPodcasts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                allPodcasts.sort((a, b) => (a.order ?? Infinity) - (b.order ?? Infinity));
+                
+                const activePodcasts = allPodcasts.filter(p => !p.isPlayed);
+                const playedPodcasts = allPodcasts.filter(p => p.isPlayed);
+
+                podcastsData = Object.fromEntries(allPodcasts.map(p => [p.id, p]));
+                
+                renderPodcastList(activePodcasts, podcastListContainer, false);
+                renderPodcastList(playedPodcasts, playedListContainer, true);
+
+                playedContainer.classList.toggle('hidden', playedPodcasts.length === 0);
+
+            }, error => {
+                console.error("Error loading podcasts: ", error);
+                loadingMessage.innerHTML = `Error loading library. <button id="openSettingsFromMsg" class="themed-text-accent underline">Check Firestore Rules</button> in settings.`;
+                document.getElementById('openSettingsFromMsg').addEventListener('click', () => settingsModal.classList.remove('hidden'));
+            });
+        }
+        
+        async function getIntelligentName(originalName) {
+            const apiKey = currentConfig.geminiApiKey;
+            if(!apiKey) return originalName;
+
+            const prompt = `Analyze the filename "${originalName}" and create a short, professional title. Focus on the main subject. For example, 'podcast_business_episode_12' should become 'Business Podcast Ep. 12'. 'tech_news_weekly_2025_06_21' should become 'Tech News Weekly (6/21/2025)'. 'ambient_study_music' should become 'Ambient Study Music'. Return ONLY the new title.`;
+            
+            try {
+                let chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
+                const payload = { contents: chatHistory };
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!response.ok) throw new Error(`API responded with ${response.status}`);
+                const result = await response.json();
+                if (result.candidates && result.candidates.length > 0 && result.candidates[0].content.parts.length > 0) {
+                    return result.candidates[0].content.parts[0].text.trim().replace(/\"/g, "");
+                } else {
+                    throw new Error("Invalid response structure from Gemini API");
+                }
+            } catch (error) {
+                console.error("Gemini API call failed:", error);
+                showNotification("AI Naming Failed. Using original filename.", "error");
+                return originalName;
+            }
+        }
+
+        async function generateArtwork(title) {
+             const apiKey = currentConfig.geminiApiKey;
+             if(!apiKey) return null;
+
+             const prompt = `Create a unique, abstract, and visually appealing cover art for a track titled "${title}". Use a modern, graphic design style with a fiery color palette of reds, oranges, and yellows. The theme should be inspired by the words in the title. For example, for "Ocean Waves Meditation", use flowing lines in shades of blue and white. For "Finance Talk", use greens and golds in a geometric pattern. Do NOT include any text in the image.`;
+             try {
+                const payload = { instances: [{ prompt }], parameters: { "sampleCount": 1} };
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`;
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                 if (!response.ok) throw new Error(`API responded with ${response.status}`);
+                const result = await response.json();
+                if (result.predictions && result.predictions.length > 0 && result.predictions[0].bytesBase64Encoded) {
+                    return `data:image/png;base64,${result.predictions[0].bytesBase64Encoded}`;
+                }
+            } catch (error) {
+                console.error("Imagen API call failed:", error);
+                showNotification("AI Artwork Generation Failed.", "error");
+            }
+            return null;
+        }
+        
+        async function uploadArtwork(base64Data, fileName) {
+            try {
+                const res = await fetch(base64Data);
+                const blob = await res.blob();
+                const storagePath = `artwork/${fileName}`;
+                const artworkRef = ref(storage, storagePath);
+                await uploadBytesResumable(artworkRef, blob);
+                return await getDownloadURL(artworkRef);
+            } catch(error) {
+                console.error("Artwork upload failed:", error);
+                showNotification("Artwork upload failed.", "error");
+                return null;
+            }
+        }
+
+        function getMetadata(file) {
+            return new Promise(resolve => {
+                window.jsmediatags.read(file, {
+                    onSuccess: (tag) => {
+                        let artworkUrl = null;
+                        if (tag.tags.picture) {
+                            const { data, format } = tag.tags.picture;
+                            let base64String = "";
+                            for (let i = 0; i < data.length; i++) {
+                                base64String += String.fromCharCode(data[i]);
+                            }
+                            artworkUrl = `data:${format};base64,${window.btoa(base64String)}`;
+                        }
+                        resolve({
+                            artworkUrl: artworkUrl,
+                            description: tag.tags.comment?.text || tag.tags.lyrics?.text || null
+                        });
+                    },
+                    onError: (error) => {
+                        console.warn('Could not read metadata:', error);
+                        resolve({ artworkUrl: null, description: null });
+                    }
+                });
+            });
+        }
+
+
+        async function handleFileUpload(file, fileNameOverride = null) {
+            if (!file || !userId) return;
+
+            fileLabel.textContent = "Analyzing...";
+            fileLabel.classList.add('cursor-not-allowed', 'opacity-50');
+            fileInput.disabled = true;
+
+            const [intelligentName, metadata] = await Promise.all([
+                getIntelligentName(fileNameOverride || file.name),
+                getMetadata(file)
+            ]);
+            
+            let finalArtworkUrl = metadata.artworkUrl;
+            if (finalArtworkUrl) {
+                 fileLabel.textContent = "Uploading Artwork...";
+                 finalArtworkUrl = await uploadArtwork(finalArtworkUrl, `artwork_${Date.now()}.png`);
+            } else if (currentConfig.geminiApiKey) {
+                fileLabel.textContent = "Creating Artwork...";
+                const generatedArtBase64 = await generateArtwork(intelligentName);
+                if(generatedArtBase64) {
+                    fileLabel.textContent = "Uploading Artwork...";
+                    finalArtworkUrl = await uploadArtwork(generatedArtBase64, `artwork_${Date.now()}.png`);
+                }
+            }
+
+            fileLabel.textContent = "Uploading Audio...";
+
+            const progressContainer = document.getElementById('uploadProgressContainer');
+            const progressBar = document.getElementById('uploadProgressBar');
+            progressContainer.style.display = 'block';
+            progressBar.style.width = '0%';
+
+            const storagePath = `podcasts/${Date.now()}-${file.name}`;
+            const uploadTask = uploadBytesResumable(ref(storage, storagePath), file);
+
+            uploadTask.on('state_changed', 
+                snapshot => progressBar.style.width = `${(snapshot.bytesTransferred / snapshot.totalBytes) * 100}%`,
+                error => { 
+                    console.error("Upload failed:", error);
+                    showNotification(`Upload failed: ${error.code}. Check Storage Rules.`, "error"); 
+                    resetUploadUI(); 
+                }, 
+                () => getDownloadURL(uploadTask.snapshot.ref).then(url => {
+                    const tempAudio = document.createElement('audio');
+                    tempAudio.src = URL.createObjectURL(file);
+                    tempAudio.onloadedmetadata = async () => {
+                        const newOrderIndex = Object.keys(podcastsData).length;
+                        await addDoc(collection(db, 'podcasts-data', 'public', 'podcasts'), { 
+                            name: intelligentName, 
+                            url, 
+                            storagePath, 
+                            playbackPosition: 0, 
+                            duration: tempAudio.duration, 
+                            uploadedAt: serverTimestamp(), 
+                            uploader: userId,
+                            order: newOrderIndex,
+                            artworkUrl: finalArtworkUrl,
+                            description: metadata.description,
+                            isPlayed: false
+                        });
+                        showNotification("Podcast uploaded!", "success");
+                        resetUploadUI();
+                    };
+                })
+            );
+        };
+        
+        async function loadInitialConfig() {
+            loadingMessage.textContent = 'Loading configuration...';
+            let firebaseConfig;
+
+            try {
+                const response = await fetch('firebase-config.json');
+                if (response.ok) {
+                    firebaseConfig = await response.json();
+                    showNotification('Loaded config from firebase-config.json', 'success');
+                } else {
+                    console.log('Could not load firebase-config.json, status:', response.status);
+                }
+            } catch (error) {
+                console.log('firebase-config.json not found, checking local storage.');
+            }
+
+            if (!firebaseConfig) {
+                const storedConfig = localStorage.getItem('firebaseConfig');
+                if (storedConfig) {
+                    try {
+                        firebaseConfig = JSON.parse(storedConfig);
+                    } catch (e) { console.error("Could not parse stored config", e); }
+                }
+            }
+
+            if (firebaseConfig && Object.values(firebaseConfig).some(v => v)) {
+                await initializeFirebase(firebaseConfig);
+            } else {
+                loadingMessage.innerHTML = 'Firebase is not configured. Please provide credentials in <button id="openSettingsFromMsg" class="themed-text-accent underline">settings</button>.';
+                document.getElementById('openSettingsFromMsg').addEventListener('click', () => settingsModal.classList.remove('hidden'));
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            applyTheme(savedTheme);
+            themeToggleButton.addEventListener('click', () => {
+                const currentTheme = document.documentElement.getAttribute('data-theme');
+                applyTheme(currentTheme === 'dark' ? 'light' : 'dark');
+            });
+            showUploadFormBtn.addEventListener('click', () => {
+                uploadSection.classList.toggle('hidden');
+                showUploadFormBtn.textContent = uploadSection.classList.contains('hidden') ? 'Add New Podcast' : 'Close Upload Form';
+            });
+            fileInput.addEventListener('change', () => {
+                if(fileInput.files.length > 0) {
+                    handleFileUpload(fileInput.files[0]);
+                }
+            });
+            importUrlBtn.addEventListener('click', async () => {
+                 const url = urlInput.value.trim();
+                 if(!url) return showNotification("Please enter a URL", "error");
+                 
+                 try {
+                    const response = await fetch(url);
+                    if(!response.ok) throw new Error(`Failed to fetch: ${response.statusText}`);
+                    const blob = await response.blob();
+                    const fileName = url.substring(url.lastIndexOf('/') + 1);
+                    const file = new File([blob], fileName, {type: blob.type});
+                    handleFileUpload(file, fileName);
+                    urlInput.value = '';
+                 } catch(e) {
+                     console.error("URL Import failed:", e);
+                     showNotification("Failed to import from URL. Check CORS policy.", "error");
+                 }
+            });
+            addRssBtn.addEventListener('click', async () => {
+                const url = rssInput.value.trim();
+                if(!url) return showNotification("Please enter a feed URL", "error");
+                await addDoc(collection(db, 'rss_feeds'), { url: url, addedAt: serverTimestamp() });
+                rssInput.value = '';
+            });
+
+            speedControlButton.addEventListener('click', () => {
+                currentSpeedIndex = (currentSpeedIndex + 1) % playbackSpeeds.length;
+                const newSpeed = playbackSpeeds[currentSpeedIndex];
+                audioPlayer.playbackRate = newSpeed;
+                speedControlButton.textContent = `${newSpeed}x`;
+                localStorage.setItem('playbackSpeed', newSpeed);
+            });
+
+            const savedSpeed = parseFloat(localStorage.getItem('playbackSpeed')) || 1;
+            const savedSpeedIndex = playbackSpeeds.indexOf(savedSpeed);
+            currentSpeedIndex = savedSpeedIndex !== -1 ? savedSpeedIndex : 0;
+            audioPlayer.playbackRate = playbackSpeeds[currentSpeedIndex];
+            speedControlButton.textContent = `${playbackSpeeds[currentSpeedIndex]}x`;
+
+            const updatePlaybackModeUI = () => {
+                shuffleButton.classList.toggle('control-active', isShuffle);
+                repeatButton.classList.toggle('control-active', isRepeat);
+            };
+
+            isShuffle = localStorage.getItem('isShuffle') === 'true';
+            isRepeat = localStorage.getItem('isRepeat') === 'true';
+            updatePlaybackModeUI();
+
+            shuffleButton.addEventListener('click', () => {
+                isShuffle = !isShuffle;
+                if(isShuffle) isRepeat = false;
+                localStorage.setItem('isShuffle', isShuffle);
+                localStorage.setItem('isRepeat', isRepeat);
+                updatePlaybackModeUI();
+            });
+
+            repeatButton.addEventListener('click', () => {
+                isRepeat = !isRepeat;
+                if(isRepeat) isShuffle = false;
+                localStorage.setItem('isRepeat', isRepeat);
+                localStorage.setItem('isShuffle', isShuffle);
+                updatePlaybackModeUI();
+            });
+
+            const savedView = localStorage.getItem('viewMode') || 'list';
+            setViewMode(savedView);
+            viewToggleBtn.addEventListener('click', () => {
+                const newMode = viewMode === 'list' ? 'grid' : 'list';
+                setViewMode(newMode);
+            });
+
+            setupSettingsModal();
+            loadInitialConfig();
+        });
+        
+        function setViewMode(mode) {
+             viewMode = mode;
+             localStorage.setItem('viewMode', mode);
+             if (mode === 'grid') {
+                 iconGridView.classList.add('hidden');
+                 iconListView.classList.remove('hidden');
+                 podcastListContainer.className = 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4';
+                 playedListContainer.className = 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4';
+             } else {
+                 iconGridView.classList.remove('hidden');
+                 iconListView.classList.add('hidden');
+                 podcastListContainer.className = 'space-y-4';
+                 playedListContainer.className = 'space-y-4';
+             }
+             loadPodcasts();
+        }
+
+        function renderPodcastList(podcasts, listElement, isPlayedList) {
+            listElement.innerHTML = '';
+            if (podcasts.length === 0 && isPlayedList) {
+                 return;
+            }
+            if (podcasts.length === 0 && !isPlayedList) {
+                listElement.innerHTML = `<p class="themed-text-secondary text-center py-4">Your library is empty. Upload your first podcast!</p>`;
+                loadingMessage.style.display = 'none';
+                return;
+            }
+            
+            loadingMessage.style.display = 'none';
+
+            podcasts.forEach(podcast => {
+                const isPlaying = podcast.id === currentPlayingId && !audioPlayer.paused;
+                const progressPercent = (podcast.duration > 0) ? (podcast.playbackPosition / podcast.duration) * 100 : 0;
+                const defaultArtwork = `https://placehold.co/80x80/374151/9ca3af?text=Fire`;
+                const podcastElement = document.createElement('div');
+                podcastElement.dataset.id = podcast.id;
+                
+                const playButtonIcon = isPlayedList ? replayIconSVG : (isPlaying ? pauseIconSVG : playIconSVG);
+                
+                if (viewMode === 'grid') {
+                    podcastElement.className = 'podcast-item themed rounded-lg shadow-md transition-all duration-300 flex flex-col items-center p-4';
+                    podcastElement.innerHTML = `
+                         <div class="relative w-full aspect-square mb-4">
+                            <img src="${podcast.artworkUrl || defaultArtwork}" class="w-full h-full object-cover rounded-md" onerror="this.src='${defaultArtwork}'">
+                             <button data-id="${podcast.id}" class="play-pause-btn absolute inset-0 w-full h-full flex items-center justify-center bg-black bg-opacity-50 text-white rounded-md opacity-0 hover:opacity-100 transition-opacity">
+                               ${isPlaying ? pauseIconSVG : playIconSVG}
+                            </button>
+                        </div>
+                        <h3 class="font-semibold truncate w-full text-center">${podcast.name}</h3>
+                        <p class="text-sm themed-text-secondary w-full text-center">${formatTime(podcast.playbackPosition)}/${formatTime(podcast.duration)}</p>
+                         <div data-id="${podcast.id}" class="progress-bar-wrapper w-full rounded-full h-1.5 mt-2 cursor-pointer relative" style="background-color: var(--bg-tertiary);">
+                            <div class="progress-bar h-full rounded-full pointer-events-none" style="width: ${progressPercent}%; background-color: var(--text-accent);"></div>
+                             <div class="scrubber-handle opacity-0" style="left: ${progressPercent}%"></div>
+                        </div>
+                    `;
+
+                } else {
+                     podcastElement.className = 'podcast-item themed rounded-lg p-4 flex flex-wrap items-center shadow-md transition-all duration-300';
+                     podcastElement.innerHTML = `
+                        <div class="flex items-center w-full">
+                            <div class="drag-handle cursor-grab pr-4 ${isPlayedList ? 'hidden' : ''}" draggable="true">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 themed-text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+                            </div>
+                            <button data-id="${podcast.id}" class="restart-btn flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center mr-2 themed-button-secondary transition-colors">
+                               ${restartIconSVG}
+                            </button>
+                            <button data-id="${podcast.id}" class="play-pause-btn flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center mr-4 themed-button-secondary transition-colors">
+                               ${playButtonIcon}
+                            </button>
+                            <div class="flex-shrink-0 w-16 h-16 rounded-md mr-4 bg-cover bg-center" style="background-image: url('${podcast.artworkUrl || defaultArtwork}')"></div>
+                            <div class="flex-grow min-w-0">
+                                <h3 class="font-semibold truncate">${podcast.name}</h3>
+                                <p class="text-sm themed-text-secondary">${formatTime(podcast.playbackPosition)} / ${formatTime(podcast.duration)}</p>
+                            </div>
+                            <div class="flex items-center ml-4">
+                               ${isPlayedList ? `<button data-id="${podcast.id}" class="move-to-library-btn themed-icon-button hover:text-green-500 p-2">${moveToLibraryIconSVG}</button>` : ''}
+                               <button data-id="${podcast.id}" data-storage-path="${podcast.storagePath}" class="delete-btn themed-icon-button hover:text-red-500 p-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                               </button>
+                            </div>
+                        </div>
+                        <div class="w-full pl-8 sm:pl-48 mt-2">
+                             <div data-id="${podcast.id}" class="progress-bar-wrapper w-full rounded-full h-2.5 cursor-pointer relative" style="background-color: var(--bg-tertiary);">
+                                <div class="progress-bar h-full rounded-full pointer-events-none" style="width: ${progressPercent}%; background-color: var(--text-accent);"></div>
+                                 <div class="scrubber-handle opacity-0" style="left: ${progressPercent}%"></div>
+                            </div>
+                            ${podcast.description ? `<p class="text-xs themed-text-secondary mt-2">${podcast.description}</p>` : ''}
+                        </div>
+                        `;
+                }
+                
+                listElement.appendChild(podcastElement);
+            });
+        }
+        
+        function updateSinglePodcastUI(id) {
+            const podcast = podcastsData[id];
+            if (!id || !podcast) return;
+            const elements = document.querySelectorAll(`[data-id="${id}"]`);
+            if (elements.length === 0) return;
+
+            elements.forEach(element => {
+                const isPlaying = id === currentPlayingId && !audioPlayer.paused;
+                const isPlayed = podcast.isPlayed;
+                const progressPercent = (podcast.duration > 0) ? (podcast.playbackPosition / podcast.duration) * 100 : 0;
+                
+                const playButton = element.querySelector('.play-pause-btn');
+                if(playButton) {
+                    const playButtonIcon = isPlayed ? replayIconSVG : (isPlaying ? pauseIconSVG : playIconSVG);
+                    playButton.innerHTML = playButtonIcon;
+                }
+                
+                const timeLabel = element.querySelector('.text-sm');
+                if(timeLabel) timeLabel.textContent = `${formatTime(podcast.playbackPosition)} / ${formatTime(podcast.duration)}`;
+
+                const progressBar = element.querySelector('.progress-bar');
+                if(progressBar) progressBar.style.width = `${progressPercent}%`;
+
+                const scrubberHandle = element.querySelector('.scrubber-handle');
+                if(scrubberHandle) scrubberHandle.style.left = `${progressPercent}%`;
+            });
+        }
+
+        async function deletePodcast(id, storagePath) {
+            try {
+                if (storagePath && storagePath !== 'undefined' && storagePath !== 'null') {
+                    const fileRef = ref(storage, storagePath);
+                    await deleteObject(fileRef);
+                }
+            } catch (error) {
+                console.warn(`Could not delete file from storage (it might already be gone): ${error.message}`);
+            }
+            await deleteDoc(doc(db, 'podcasts-data', 'public', 'podcasts', id));
+        }
+
+        function resetUploadUI() {
+            fileInput.value = '';
+            fileInput.disabled = false;
+            fileLabel.textContent = 'Choose an audio file to upload...';
+            fileLabel.classList.remove('cursor-not-allowed', 'opacity-50');
+            setTimeout(() => {
+                document.getElementById('uploadProgressContainer').style.display = 'none';
+                document.getElementById('uploadProgressBar').style.width = '0%';
+            }, 500);
+        }
+
+        document.body.addEventListener('click', e => {
+            if (e.target.closest('.play-pause-btn')) handlePlayPause(e.target.closest('.play-pause-btn').dataset.id);
+            if (e.target.closest('.restart-btn')) handleRestart(e.target.closest('.restart-btn').dataset.id);
+            if (e.target.closest('.delete-btn')) handleDeleteRequest(e.target.closest('.delete-btn').dataset.id, podcastsData[e.target.closest('.delete-btn').dataset.id]?.storagePath);
+            if (e.target.closest('.move-to-library-btn')) handleMoveToLibrary(e.target.closest('.move-to-library-btn').dataset.id);
+        });
+
+        let draggedItem = null;
+        let isScrubbing = false;
+        let scrubbedId = null;
+
+        document.body.addEventListener('dragstart', e => {
+            if (e.target.closest('.drag-handle')) {
+                draggedItem = e.target.closest('.podcast-item');
+                setTimeout(() => draggedItem.classList.add('dragging'), 0);
+            }
+        });
+
+        document.body.addEventListener('dragend', e => {
+            if (draggedItem) {
+                draggedItem.classList.remove('dragging');
+                draggedItem = null;
+                updateOrderInFirestore();
+            }
+        });
+
+        document.body.addEventListener('dragover', e => {
+            e.preventDefault();
+            const container = e.target.closest('#podcastListContainer');
+            if(!container || !draggedItem) return;
+
+            const afterElement = getDragAfterElement(container, e.clientY);
+            if (afterElement == null) {
+                container.appendChild(draggedItem);
+            } else {
+                container.insertBefore(draggedItem, afterElement);
+            }
+        });
+        
+        function getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('.podcast-item:not(.dragging)')];
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+
+        async function updateOrderInFirestore() {
+            const batch = writeBatch(db);
+            const items = podcastListContainer.querySelectorAll('.podcast-item');
+            items.forEach((item, index) => {
+                const docRef = doc(db, 'podcasts-data', 'public', 'podcasts', item.dataset.id);
+                batch.update(docRef, { order: index });
+            });
+            await batch.commit();
+            showNotification('Playlist order saved!', 'success');
+        }
+
+        function handleScrub(id, event) {
+            event.preventDefault(); 
+            const podcast = podcastsData[id];
+            if (!podcast || !podcast.duration) return;
+            const progressBarWrapper = document.querySelector(`[data-id="${id}"] .progress-bar-wrapper`);
+            if(!progressBarWrapper) return;
+            const rect = progressBarWrapper.getBoundingClientRect();
+            const clientX = event.touches ? event.touches[0].clientX : event.clientX;
+            const clickX = clientX - rect.left;
+            let newPosition = (clickX / rect.width) * podcast.duration;
+            if (newPosition < 0) newPosition = 0;
+            if (newPosition > podcast.duration) newPosition = podcast.duration;
+            
+            if (id === currentPlayingId) {
+                audioPlayer.currentTime = newPosition;
+            }
+            podcastsData[id].playbackPosition = newPosition;
+            updateSinglePodcastUI(id);
+            if(!isScrubbing) {
+                 updatePlaybackPosition(id, newPosition);
+            }
+        }
+        
+        document.body.addEventListener('mousedown', (e) => {
+            const wrapper = e.target.closest('.progress-bar-wrapper');
+            if (wrapper) {
+                isScrubbing = true;
+                scrubbedId = wrapper.dataset.id;
+                handleScrub(scrubbedId, e);
+            }
+        });
+         document.body.addEventListener('touchstart', (e) => {
+            const wrapper = e.target.closest('.progress-bar-wrapper');
+            if (wrapper) {
+                isScrubbing = true;
+                 scrubbedId = wrapper.dataset.id;
+                handleScrub(scrubbedId, e);
+            }
+        });
+
+        document.body.addEventListener('mousemove', (e) => {
+            if (isScrubbing) {
+                 if(scrubbedId) handleScrub(scrubbedId, e);
+            }
+        });
+        document.body.addEventListener('touchmove', (e) => {
+            if (isScrubbing) {
+                const touch = e.touches[0];
+                const element = document.elementFromPoint(touch.clientX, touch.clientY);
+                 const wrapper = element.closest('.progress-bar-wrapper');
+                 if(wrapper) handleScrub(wrapper.dataset.id, e);
+            }
+        });
+
+
+        document.body.addEventListener('mouseup', () => {
+            if(isScrubbing && scrubbedId) {
+                updatePlaybackPosition(scrubbedId, podcastsData[scrubbedId].playbackPosition);
+            }
+            isScrubbing = false;
+            scrubbedId = null;
+        });
+        document.body.addEventListener('touchend', () => {
+             if(isScrubbing && scrubbedId) {
+                updatePlaybackPosition(scrubbedId, podcastsData[scrubbedId].playbackPosition);
+            }
+            isScrubbing = false;
+            scrubbedId = null;
+        });
+
+        function handleDeleteRequest(id, storagePath) {
+             const confirmDelete = document.getElementById('confirmDelete');
+             const cancelDelete = document.getElementById('cancelDelete');
+             const podcastNameToDelete = document.getElementById('podcastNameToDelete');
+             
+             podcastNameToDelete.textContent = podcastsData[id]?.name || 'this podcast';
+             deleteModal.classList.remove('hidden');
+
+             const confirmHandler = async () => {
+                confirmDelete.disabled = true;
+                confirmDelete.textContent = "Deleting...";
+                try {
+                    if (currentPlayingId === id) { audioPlayer.pause(); audioPlayer.src = ''; currentPlayingId = null; }
+                    await deletePodcast(id, storagePath);
+                    showNotification("Podcast deleted.", "success");
+                } catch (error) {
+                    showNotification("Failed to delete podcast.", "error");
+                    console.error("Delete failed:", error);
+                } finally {
+                    deleteModal.classList.add('hidden');
+                    confirmDelete.disabled = false;
+                    confirmDelete.textContent = "Delete";
+                }
+             };
+             
+             confirmDelete.onclick = confirmHandler;
+             cancelDelete.onclick = () => deleteModal.classList.add('hidden');
+        }
+
+        function handleMoveToLibrary(id) {
+             updateDoc(doc(db, 'podcasts-data', 'public', 'podcasts', id), { isPlayed: false, order: Object.keys(podcastsData).length });
+        }
+        
+        function handleRestart(id) {
+            if (id === currentPlayingId) {
+                audioPlayer.currentTime = 0;
+            }
+            podcastsData[id].playbackPosition = 0;
+            updateSinglePodcastUI(id);
+            updatePlaybackPosition(id, 0);
+        }
+
+        function handlePlayPause(id) {
+            const podcast = podcastsData[id];
+            if (!podcast) return;
+
+            if (podcast.isPlayed) {
+                updateDoc(doc(db, 'podcasts-data', 'public', 'podcasts', id), { isPlayed: false, playbackPosition: 0 });
+            }
+
+            const isCurrentlyPlaying = !audioPlayer.paused;
+            const isThisPodcastPlaying = isCurrentlyPlaying && currentPlayingId === id;
+            
+            if (isThisPodcastPlaying) {
+                audioPlayer.pause();
+                updateSinglePodcastUI(id);
+            } else {
+                const oldPlayingId = currentPlayingId;
+                currentPlayingId = id;
+                if (oldPlayingId && oldPlayingId !== id) {
+                    updateSinglePodcastUI(oldPlayingId);
+                }
+
+                if (audioPlayer.src !== podcast.url) {
+                    audioPlayer.src = podcast.url;
+                    audioPlayer.load();
+                }
+                
+                audioPlayer.currentTime = podcast.playbackPosition;
+                audioPlayer.play().catch(e => console.error("Play error:", e));
+                updateSinglePodcastUI(id);
+            }
+        }
+        
+        audioPlayer.addEventListener('timeupdate', () => {
+            if (!currentPlayingId || !podcastsData[currentPlayingId] || isScrubbing) return;
+            const newPosition = audioPlayer.currentTime;
+            podcastsData[currentPlayingId].playbackPosition = newPosition;
+            updateSinglePodcastUI(currentPlayingId);
+            clearTimeout(updateTimer);
+            updateTimer = setTimeout(() => updatePlaybackPosition(currentPlayingId, newPosition), 3000);
+        });
+        
+        audioPlayer.addEventListener('ended', () => {
+            if (!currentPlayingId) return;
+            const oldPlayingId = currentPlayingId;
+            
+            if (isRepeat) {
+                audioPlayer.currentTime = 0;
+                audioPlayer.play();
+                return;
+            }
+            
+            updateDoc(doc(db, 'podcasts-data', 'public', 'podcasts', oldPlayingId), { isPlayed: true, playbackPosition: 0 });
+            
+            const activePlaylist = Array.from(document.querySelectorAll('#podcastListContainer .podcast-item')).map(item => item.dataset.id);
+            if (activePlaylist.length <= 1 && !isShuffle) return;
+
+            if (isShuffle) {
+                let unplayed = activePlaylist.filter(id => id !== oldPlayingId);
+                if(unplayed.length > 0) {
+                    let randomIndex = Math.floor(Math.random() * unplayed.length);
+                    handlePlayPause(unplayed[randomIndex]);
+                }
+            } else {
+                 const currentIndex = activePlaylist.indexOf(oldPlayingId);
+                 const nextIndex = currentIndex + 1;
+                 if (nextIndex < activePlaylist.length) {
+                    const nextPodcastId = activePlaylist[nextIndex];
+                    handlePlayPause(nextPodcastId);
+                 }
+            }
+        });
+        
+        async function updatePlaybackPosition(id, position) {
+            if (!userId || !firebaseAppInitialized) return;
+            const docRef = doc(db, 'podcasts-data', 'public', 'podcasts', id);
+            try {
+                await updateDoc(docRef, { playbackPosition: position });
+                if(podcastsData[id]) podcastsData[id].playbackPosition = position;
+            } catch(e) {
+                console.warn("Could not update playback position:", e.message);
+            }
+        }
+
+        function formatTime(seconds) {
+            if (isNaN(seconds) || seconds < 0) return '00:00';
+            const d = new Date(seconds * 1000);
+            return `${d.getUTCHours() > 0 ? d.getUTCHours()+':' : ''}${d.getUTCMinutes().toString().padStart(2, '0')}:${d.getUTCSeconds().toString().padStart(2, '0')}`;
+        }
+        function showNotification(message, type = "success") {
+            messageText.textContent = message;
+            messageBox.className = `fixed bottom-24 right-5 text-white py-2 px-4 rounded-lg shadow-lg transition-opacity duration-300 z-50 ${type === 'error' ? 'bg-red-500' : 'bg-green-500'}`;
+            messageBox.classList.remove('opacity-0');
+            setTimeout(() => messageBox.classList.add('opacity-0'), 3000);
+        }
+    </script>
+</body>
+</html>
