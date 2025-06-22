@@ -652,16 +652,29 @@ service firebase.storage {
             if (unsubscribeFromPodcasts) unsubscribeFromPodcasts(); 
             
             const podcastsCol = collection(db, 'podcasts-data', 'public', 'podcasts');
-            const q = query(podcastsCol, where('source', '!=', 'rss'));
             
-            unsubscribeFromPodcasts = onSnapshot(q, snapshot => {
+            // First try to load all podcasts and filter client-side since your existing data might not have 'source' field
+            unsubscribeFromPodcasts = onSnapshot(podcastsCol, snapshot => {
                 let allPodcasts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                allPodcasts.sort((a, b) => (a.order ?? Infinity) - (b.order ?? Infinity));
                 
-                const activePodcasts = allPodcasts.filter(p => !p.isPlayed);
-                const playedPodcasts = allPodcasts.filter(p => p.isPlayed);
+                // Filter out RSS episodes (only show files without source='rss' or no source field)
+                let libraryPodcasts = allPodcasts.filter(p => !p.source || p.source !== 'rss');
+                libraryPodcasts.sort((a, b) => (a.order ?? Infinity) - (b.order ?? Infinity));
+                
+                console.log('Total podcasts found:', allPodcasts.length);
+                console.log('Library podcasts (non-RSS):', libraryPodcasts.length);
+                
+                const activePodcasts = libraryPodcasts.filter(p => !p.isPlayed);
+                const playedPodcasts = libraryPodcasts.filter(p => p.isPlayed);
 
                 podcastsData = Object.fromEntries(allPodcasts.map(p => [p.id, p]));
+                
+                if (libraryPodcasts.length === 0) {
+                    loadingMessage.textContent = 'Your library is empty. Upload your first podcast!';
+                    loadingMessage.style.display = 'block';
+                } else {
+                    loadingMessage.style.display = 'none';
+                }
                 
                 renderPodcastList(activePodcasts, podcastListContainer, false);
                 renderPodcastList(playedPodcasts, playedListContainer, true);
@@ -670,8 +683,13 @@ service firebase.storage {
 
             }, error => {
                 console.error("Error loading podcasts: ", error);
-                loadingMessage.innerHTML = `Error loading library. <button id="openSettingsFromMsg" class="themed-text-accent underline">Check Firestore Rules</button> in settings.`;
-                document.getElementById('openSettingsFromMsg').addEventListener('click', () => settingsModal.classList.remove('hidden'));
+                if (loadingMessage) {
+                    loadingMessage.innerHTML = `Error loading library. <button id="openSettingsFromMsg" class="themed-text-accent underline">Check Firestore Rules</button> in settings.`;
+                    const settingsBtn = document.getElementById('openSettingsFromMsg');
+                    if (settingsBtn && settingsModal) {
+                        settingsBtn.addEventListener('click', () => settingsModal.classList.remove('hidden'));
+                    }
+                }
             });
         }
 
