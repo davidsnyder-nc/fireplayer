@@ -246,18 +246,7 @@
             </div>
         </div>
         
-        <div id="rssFeedsContainer" class="mb-8 hidden">
-             <div class="flex justify-between items-center mb-4">
-                 <h2 class="text-2xl font-semibold">My Feeds</h2>
-                 <button id="refreshFeedsBtn" class="themed-button-secondary px-4 py-2 rounded-md">
-                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                     </svg>
-                     Refresh
-                 </button>
-             </div>
-             <div id="rssFeedsList" class="space-y-2"></div>
-        </div>
+
 
         <div>
             <!-- Tab Navigation -->
@@ -267,6 +256,9 @@
                 </button>
                 <button id="rssEpisodesTab" class="tab-button px-4 py-2 font-semibold themed-text-secondary hover:themed-text-accent">
                     RSS Episodes
+                </button>
+                <button id="manageFeedsTab" class="tab-button px-4 py-2 font-semibold themed-text-secondary hover:themed-text-accent">
+                    Manage Feeds
                 </button>
             </div>
             
@@ -281,6 +273,38 @@
             <div id="rssEpisodesContent" class="hidden">
                 <div id="rssEpisodesContainer">
                     <p id="rssLoadingMessage" class="themed-text-secondary text-center py-4">No RSS episodes imported yet.</p>
+                </div>
+            </div>
+            
+            <!-- Manage Feeds Content -->
+            <div id="manageFeedsContent" class="hidden">
+                <div class="themed rounded-lg p-6 mb-8 shadow-lg">
+                    <h2 class="text-2xl font-semibold mb-4">Add New RSS Feed</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="manageFeedInput" class="block text-sm font-medium themed-text-secondary mb-1">RSS Feed URL</label>
+                            <div class="mt-1 flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4">
+                                <input type="text" id="manageFeedInput" placeholder="Paste an RSS Feed URL here..." class="w-full flex-grow themed-input rounded-md px-4 py-3">
+                                <input type="number" id="manageFeedLimit" min="1" max="10" value="5" class="w-20 themed-input rounded-md px-4 py-3">
+                                <button id="addManageFeedBtn" class="w-full sm:w-auto flex-shrink-0 themed-button-secondary font-bold py-3 px-6 rounded-md">Import</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="manageFeedsContainer">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-2xl font-semibold">My Feeds</h2>
+                        <button id="refreshManageFeedsBtn" class="themed-button-secondary px-4 py-2 rounded-md">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            Refresh All
+                        </button>
+                    </div>
+                    <div id="manageFeedsList" class="space-y-2">
+                        <p class="themed-text-secondary text-center py-4">No RSS feeds added yet.</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -441,11 +465,16 @@
         const importUrlBtn = document.getElementById('importUrlBtn');
         const rssInput = document.getElementById('rssInput');
         const addRssBtn = document.getElementById('addRssBtn');
-        const refreshFeedsBtn = document.getElementById('refreshFeedsBtn');
         const libraryTab = document.getElementById('libraryTab');
         const rssEpisodesTab = document.getElementById('rssEpisodesTab');
+        const manageFeedsTab = document.getElementById('manageFeedsTab');
         const libraryContent = document.getElementById('libraryContent');
         const rssEpisodesContent = document.getElementById('rssEpisodesContent');
+        const manageFeedsContent = document.getElementById('manageFeedsContent');
+        const manageFeedInput = document.getElementById('manageFeedInput');
+        const manageFeedLimit = document.getElementById('manageFeedLimit');
+        const addManageFeedBtn = document.getElementById('addManageFeedBtn');
+        const refreshManageFeedsBtn = document.getElementById('refreshManageFeedsBtn');
         const rssFeedsContainer = document.getElementById('rssFeedsContainer');
         const rssFeedsList = document.getElementById('rssFeedsList');
         
@@ -538,7 +567,7 @@
                 if (user) {
                     userId = user.uid;
                     loadPodcasts();
-                    loadRssFeeds();
+                    loadManageFeeds();
                 } else {
                     signInAnonymously(auth).catch(error => {
                         console.error("Anonymous sign-in failed:", error);
@@ -1023,7 +1052,7 @@ service firebase.storage {
                         }
                         
                         // Reload RSS feeds list and RSS episodes
-                        loadRssFeeds();
+                        loadManageFeeds();
                         loadRssEpisodes();
                         
                         showNotification(`Successfully imported ${episodes.length} episodes from ${podcastTitle}!`, 'success');
@@ -1043,10 +1072,74 @@ service firebase.storage {
                 }
             });
 
-            // Refresh feeds functionality
-            refreshFeedsBtn.addEventListener('click', async () => {
-                refreshFeedsBtn.disabled = true;
-                refreshFeedsBtn.textContent = 'Refreshing...';
+            // RSS Feed management functionality
+            addManageFeedBtn.addEventListener('click', async () => {
+                const url = manageFeedInput.value.trim();
+                const limit = parseInt(manageFeedLimit.value) || 5;
+                
+                if (!url) {
+                    showNotification('Please enter a feed URL', 'error');
+                    return;
+                }
+
+                addManageFeedBtn.disabled = true;
+                addManageFeedBtn.textContent = 'Importing...';
+
+                try {
+                    const feedData = await parseRSSFeed(url, limit);
+                    const { episodes, podcastTitle, podcastArtwork } = feedData;
+                    
+                    if (episodes.length === 0) {
+                        showNotification('No audio episodes found in this RSS feed', 'error');
+                        return;
+                    }
+
+                    if (typeof db !== 'undefined' && db) {
+                        await addDoc(collection(db, 'rss_feeds'), { 
+                            url: url, 
+                            title: podcastTitle,
+                            artwork: podcastArtwork,
+                            addedAt: serverTimestamp() 
+                        });
+
+                        for (const episode of episodes) {
+                            await addDoc(collection(db, 'podcasts-data', 'public', 'podcasts'), {
+                                name: episode.title,
+                                description: episode.description,
+                                url: episode.url,
+                                artworkUrl: episode.artworkUrl,
+                                podcastTitle: episode.podcastTitle,
+                                uploadedAt: serverTimestamp(),
+                                playbackPosition: 0,
+                                duration: 0,
+                                isPlayed: false,
+                                source: 'rss'
+                            });
+                        }
+                        
+                        loadManageFeeds();
+                        loadRssEpisodes();
+                        
+                        showNotification(`Successfully imported ${episodes.length} episodes from ${podcastTitle}!`, 'success');
+                    } else {
+                        showNotification('Firebase not configured. Please set up Firebase to import RSS feeds.', 'error');
+                    }
+
+                    manageFeedInput.value = '';
+
+                } catch (error) {
+                    console.error('RSS import failed:', error);
+                    showNotification(`RSS import failed: ${error.message}`, 'error');
+                } finally {
+                    addManageFeedBtn.disabled = false;
+                    addManageFeedBtn.textContent = 'Import';
+                }
+            });
+
+            // Refresh all feeds functionality
+            refreshManageFeedsBtn.addEventListener('click', async () => {
+                refreshManageFeedsBtn.disabled = true;
+                refreshManageFeedsBtn.textContent = 'Refreshing...';
                 
                 try {
                     await refreshAllFeeds();
@@ -1055,8 +1148,8 @@ service firebase.storage {
                     console.error('Refresh failed:', error);
                     showNotification('Failed to refresh feeds', 'error');
                 } finally {
-                    refreshFeedsBtn.disabled = false;
-                    refreshFeedsBtn.textContent = 'Refresh';
+                    refreshManageFeedsBtn.disabled = false;
+                    refreshManageFeedsBtn.textContent = 'Refresh All';
                 }
             });
 
@@ -1107,26 +1200,36 @@ service firebase.storage {
             });
 
             // Tab functionality
-            libraryTab.addEventListener('click', () => {
-                libraryTab.classList.add('themed-text-accent', 'border-b-2', 'border-orange-500');
-                libraryTab.classList.remove('themed-text-secondary');
-                rssEpisodesTab.classList.add('themed-text-secondary');
-                rssEpisodesTab.classList.remove('themed-text-accent', 'border-b-2', 'border-orange-500');
+            function switchTab(activeTab, activeContent) {
+                // Reset all tabs
+                [libraryTab, rssEpisodesTab, manageFeedsTab].forEach(tab => {
+                    tab.classList.add('themed-text-secondary');
+                    tab.classList.remove('themed-text-accent', 'border-b-2', 'border-orange-500');
+                });
                 
-                libraryContent.classList.remove('hidden');
-                rssEpisodesContent.classList.add('hidden');
+                // Hide all content
+                [libraryContent, rssEpisodesContent, manageFeedsContent].forEach(content => {
+                    content.classList.add('hidden');
+                });
+                
+                // Activate selected tab and content
+                activeTab.classList.add('themed-text-accent', 'border-b-2', 'border-orange-500');
+                activeTab.classList.remove('themed-text-secondary');
+                activeContent.classList.remove('hidden');
+            }
+
+            libraryTab.addEventListener('click', () => {
+                switchTab(libraryTab, libraryContent);
             });
 
             rssEpisodesTab.addEventListener('click', () => {
-                rssEpisodesTab.classList.add('themed-text-accent', 'border-b-2', 'border-orange-500');
-                rssEpisodesTab.classList.remove('themed-text-secondary');
-                libraryTab.classList.add('themed-text-secondary');
-                libraryTab.classList.remove('themed-text-accent', 'border-b-2', 'border-orange-500');
-                
-                rssEpisodesContent.classList.remove('hidden');
-                libraryContent.classList.add('hidden');
-                
-                loadRssEpisodes(); // Load RSS episodes when tab is clicked
+                switchTab(rssEpisodesTab, rssEpisodesContent);
+                loadRssEpisodes();
+            });
+
+            manageFeedsTab.addEventListener('click', () => {
+                switchTab(manageFeedsTab, manageFeedsContent);
+                loadManageFeeds();
             });
 
             setupSettingsModal();
@@ -1256,35 +1359,48 @@ service firebase.storage {
             });
         }
 
-        // Load RSS feeds from Firestore
-        async function loadRssFeeds() {
+        // Load RSS feeds for management tab
+        async function loadManageFeeds() {
             try {
                 const rssCol = collection(db, 'rss_feeds');
                 const rssSnapshot = await getDocs(rssCol);
                 
-                if (!rssSnapshot.empty) {
-                    document.getElementById('rssFeedsContainer').classList.remove('hidden');
-                    const rssFeedsList = document.getElementById('rssFeedsList');
-                    rssFeedsList.innerHTML = '';
+                const manageFeedsList = document.getElementById('manageFeedsList');
+                
+                if (rssSnapshot.empty) {
+                    manageFeedsList.innerHTML = '<p class="themed-text-secondary text-center py-4">No RSS feeds added yet.</p>';
+                    return;
+                }
+                
+                manageFeedsList.innerHTML = '';
+                
+                rssSnapshot.forEach(doc => {
+                    const feed = doc.data();
+                    const feedElement = document.createElement('div');
+                    feedElement.className = 'themed rounded-lg p-4 flex justify-between items-center';
+                    const lastChecked = feed.lastChecked ? new Date(feed.lastChecked.toDate()).toLocaleDateString() : 'Never';
+                    const feedTitle = feed.title || feed.url;
                     
-                    rssSnapshot.forEach(doc => {
-                        const feed = doc.data();
-                        const feedElement = document.createElement('div');
-                        feedElement.className = 'themed rounded-lg p-3 flex justify-between items-center';
-                        const lastChecked = feed.lastChecked ? new Date(feed.lastChecked.toDate()).toLocaleDateString() : 'Never';
-                        const feedTitle = feed.title || feed.url;
-                        feedElement.innerHTML = `
+                    feedElement.innerHTML = `
+                        <div class="flex items-center space-x-4">
+                            ${feed.artwork ? `<img src="${feed.artwork}" alt="Podcast artwork" class="w-12 h-12 rounded-md object-cover">` : ''}
                             <div>
-                                <div class="themed-text-primary">${feedTitle}</div>
+                                <div class="themed-text-primary font-medium">${feedTitle}</div>
                                 <div class="text-xs themed-text-secondary">Last checked: ${lastChecked}</div>
+                                <div class="text-xs themed-text-secondary">${feed.url}</div>
                             </div>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button onclick="refreshSingleFeed('${doc.id}')" class="themed-button-secondary px-3 py-1 rounded text-sm">
+                                Refresh
+                            </button>
                             <button onclick="deleteFeed('${doc.id}')" class="themed-button-danger px-3 py-1 rounded text-sm">
                                 Remove
                             </button>
-                        `;
-                        rssFeedsList.appendChild(feedElement);
-                    });
-                }
+                        </div>
+                    `;
+                    manageFeedsList.appendChild(feedElement);
+                });
             } catch (error) {
                 console.error('Error loading RSS feeds:', error);
             }
@@ -1356,7 +1472,7 @@ service firebase.storage {
                     showNotification('No new episodes found', 'info');
                 }
                 
-                loadRssFeeds(); // Refresh the feeds list to show updated timestamps
+                loadManageFeeds(); // Refresh the feeds list to show updated timestamps
                 
             } catch (error) {
                 console.error('Error refreshing feeds:', error);
@@ -1379,7 +1495,7 @@ service firebase.storage {
                 console.log('Feed deleted successfully:', feedId);
                 
                 // Immediately update the UI without page refresh
-                loadRssFeeds();
+                loadManageFeeds();
                 loadRssEpisodes();
                 
                 showNotification('RSS feed removed', 'success');
