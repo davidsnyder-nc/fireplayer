@@ -324,7 +324,12 @@
                 </div>
                 
                 <div id="playedContainer" class="mt-12 hidden">
-                    <h2 id="playedTitle" class="text-2xl font-semibold mb-4">Played</h2>
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 id="playedTitle" class="text-2xl font-semibold">Played</h2>
+                        <button id="deleteAllPlayedBtn" class="themed-button-danger px-4 py-2 rounded-md text-sm">
+                            Delete All Played
+                        </button>
+                    </div>
                     <div id="playedListContainer"></div>
                 </div>
             </div>
@@ -1524,6 +1529,63 @@ service firebase.storage {
             setupSkipButton('skipForwardBtn', 'forward');
             setupSkipButton('mobileSkipBackBtn', 'back');
             setupSkipButton('mobileSkipForwardBtn', 'forward');
+
+            // Delete all played items functionality
+            const deleteAllPlayedBtn = document.getElementById('deleteAllPlayedBtn');
+            if (deleteAllPlayedBtn) {
+                deleteAllPlayedBtn.addEventListener('click', async () => {
+                    // Get all played podcasts from library (non-RSS)
+                    const playedPodcasts = Object.values(podcastsData).filter(p => p.isPlayed && p.source !== 'rss');
+                    
+                    if (playedPodcasts.length === 0) {
+                        showNotification('No played items to delete', 'info');
+                        return;
+                    }
+                    
+                    // Confirm deletion
+                    if (!confirm(`Are you sure you want to delete all ${playedPodcasts.length} played items? This action cannot be undone.`)) {
+                        return;
+                    }
+                    
+                    deleteAllPlayedBtn.disabled = true;
+                    deleteAllPlayedBtn.textContent = 'Deleting...';
+                    
+                    try {
+                        let deletedCount = 0;
+                        for (const podcast of playedPodcasts) {
+                            // Stop playing if this is the current track
+                            if (currentPlayingId === podcast.id) {
+                                audioPlayer.pause();
+                                audioPlayer.src = '';
+                                currentPlayingId = null;
+                            }
+                            
+                            // Delete from storage if it has a storage path
+                            if (podcast.storagePath && podcast.storagePath !== 'undefined' && podcast.storagePath !== 'null') {
+                                try {
+                                    const fileRef = ref(storage, podcast.storagePath);
+                                    await deleteObject(fileRef);
+                                } catch (error) {
+                                    console.warn(`Could not delete file from storage: ${error.message}`);
+                                }
+                            }
+                            
+                            // Delete from Firestore
+                            await deleteDoc(doc(db, 'podcasts-data', 'public', 'podcasts', podcast.id));
+                            deletedCount++;
+                        }
+                        
+                        showNotification(`Successfully deleted ${deletedCount} played items`, 'success');
+                        
+                    } catch (error) {
+                        console.error('Error deleting played items:', error);
+                        showNotification(`Failed to delete some items: ${error.message}`, 'error');
+                    } finally {
+                        deleteAllPlayedBtn.disabled = false;
+                        deleteAllPlayedBtn.textContent = 'Delete All Played';
+                    }
+                });
+            }
 
             const savedView = localStorage.getItem('viewMode') || 'list';
             setViewMode(savedView);
