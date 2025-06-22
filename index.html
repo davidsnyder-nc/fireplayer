@@ -381,7 +381,11 @@
                     <p class="text-sm themed-text-secondary mb-2">Podcast: <span id="fetchModalPodcastName" class="themed-text-primary"></span></p>
                     <label for="fetchCount" class="block text-sm font-medium themed-text-secondary mb-2">Number of older episodes to fetch:</label>
                     <select id="fetchCount" class="w-full themed-input rounded-md px-3 py-2">
-                        <option value="5">Last 5 episodes</option>
+                        <option value="1">Last 1 episode</option>
+                        <option value="2">Last 2 episodes</option>
+                        <option value="3">Last 3 episodes</option>
+                        <option value="4">Last 4 episodes</option>
+                        <option value="5" selected>Last 5 episodes</option>
                         <option value="10">Last 10 episodes</option>
                         <option value="15">Last 15 episodes</option>
                         <option value="20">Last 20 episodes</option>
@@ -393,6 +397,29 @@
                         Fetch Episodes
                     </button>
                     <button id="fetchMoreCancel" class="themed-button-secondary px-4 py-2 rounded-md flex-1">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit Feed Modal -->
+        <div id="editFeedModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+            <div class="themed rounded-lg p-6 max-w-md w-full mx-4">
+                <h3 class="text-xl font-semibold mb-4">Edit RSS Feed</h3>
+                <div class="mb-4">
+                    <label for="editFeedName" class="block text-sm font-medium themed-text-secondary mb-2">Feed Name:</label>
+                    <input type="text" id="editFeedName" class="w-full themed-input rounded-md px-3 py-2" placeholder="Enter feed name...">
+                </div>
+                <div class="mb-4">
+                    <label for="editFeedUrl" class="block text-sm font-medium themed-text-secondary mb-2">Feed URL:</label>
+                    <textarea id="editFeedUrl" rows="3" class="w-full themed-input rounded-md px-3 py-2" placeholder="Paste the full RSS feed URL here..."></textarea>
+                </div>
+                <div class="flex space-x-3">
+                    <button id="editFeedSave" class="themed-button-primary px-4 py-2 rounded-md flex-1">
+                        Save Changes
+                    </button>
+                    <button id="editFeedCancel" class="themed-button-secondary px-4 py-2 rounded-md flex-1">
                         Cancel
                     </button>
                 </div>
@@ -1494,6 +1521,57 @@ service firebase.storage {
                 }
             });
 
+            // Edit feed modal elements
+            const editFeedModal = document.getElementById('editFeedModal');
+            const editFeedName = document.getElementById('editFeedName');
+            const editFeedUrl = document.getElementById('editFeedUrl');
+            const editFeedSave = document.getElementById('editFeedSave');
+            const editFeedCancel = document.getElementById('editFeedCancel');
+
+            // Edit feed modal handlers
+            editFeedCancel.addEventListener('click', () => {
+                editFeedModal.classList.add('hidden');
+            });
+
+            editFeedSave.addEventListener('click', async () => {
+                const feedId = editFeedModal.dataset.feedId;
+                const newName = editFeedName.value.trim();
+                const newUrl = editFeedUrl.value.trim();
+                
+                if (!newName || !newUrl) {
+                    showNotification('Please fill in both name and URL', 'error');
+                    return;
+                }
+                
+                editFeedModal.classList.add('hidden');
+                editFeedSave.disabled = true;
+                editFeedSave.textContent = 'Saving...';
+                
+                try {
+                    await updateDoc(doc(db, 'rss_feeds', feedId), {
+                        title: newName,
+                        url: newUrl,
+                        lastChecked: serverTimestamp()
+                    });
+                    
+                    showNotification('Feed updated successfully', 'success');
+                    loadManageFeeds();
+                } catch (error) {
+                    console.error('Error updating feed:', error);
+                    showNotification(`Failed to update feed: ${error.message}`, 'error');
+                } finally {
+                    editFeedSave.disabled = false;
+                    editFeedSave.textContent = 'Save Changes';
+                }
+            });
+
+            // Close edit modal when clicking outside
+            editFeedModal.addEventListener('click', (e) => {
+                if (e.target === editFeedModal) {
+                    editFeedModal.classList.add('hidden');
+                }
+            });
+
             // Volume control initialization and event handlers
             const volumeSlider = document.getElementById('volumeSlider');
             if (volumeSlider) {
@@ -1730,6 +1808,9 @@ service firebase.storage {
                             </button>
                             <button onclick="refreshSingleFeed('${doc.id}')" class="themed-button-secondary px-3 py-1 rounded text-sm" id="refresh-${doc.id}">
                                 Refresh
+                            </button>
+                            <button onclick="showEditFeedModal('${doc.id}', '${feedTitle}', '${feed.url}')" class="themed-button-secondary px-3 py-1 rounded text-sm">
+                                Edit
                             </button>
                             <button onclick="deleteFeed('${doc.id}')" class="themed-button-danger px-3 py-1 rounded text-sm">
                                 Remove
