@@ -490,6 +490,14 @@
                             </svg>
                             <span class="text-xs font-bold absolute -bottom-1 left-1/2 transform -translate-x-1/2">30</span>
                         </button>
+                        <button id="centerPlayPauseBtn" class="bg-orange-500 hover:bg-orange-600 rounded-full p-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center" disabled title="Play/Pause">
+                            <svg id="centerPlayIcon" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M8 5v14l11-7z"/>
+                            </svg>
+                            <svg id="centerPauseIcon" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6" />
+                            </svg>
+                        </button>
                         <button id="skipForwardBtn" class="themed-icon-button p-2 rounded-full relative flex items-center justify-center" title="Skip forward 30 seconds">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.933 12.8a1 1 0 000-1.6L6.6 7.2A1 1 0 005 8v8a1 1 0 001.6.8l5.333-4zM19.933 12.8a1 1 0 000-1.6l-5.333-4A1 1 0 0013 8v8a1 1 0 001.6.8l5.333-4z"/>
@@ -1504,6 +1512,42 @@ service firebase.storage {
                 setViewMode(newMode);
             });
 
+            // Center play/pause button functionality
+            const centerPlayPauseBtn = document.getElementById('centerPlayPauseBtn');
+            const centerPlayIcon = document.getElementById('centerPlayIcon');
+            const centerPauseIcon = document.getElementById('centerPauseIcon');
+
+            if (centerPlayPauseBtn) {
+                centerPlayPauseBtn.addEventListener('click', () => {
+                    if (currentPlayingId) {
+                        // Toggle play/pause for current track
+                        const isCurrentlyPlaying = !audioPlayer.paused;
+                        if (isCurrentlyPlaying) {
+                            audioPlayer.pause();
+                        } else {
+                            audioPlayer.play().catch(e => console.error("Play error:", e));
+                        }
+                        updateCenterPlayButton();
+                    }
+                });
+            }
+
+            // Update center play button state
+            function updateCenterPlayButton() {
+                if (!centerPlayPauseBtn) return;
+                
+                const isPlaying = currentPlayingId && !audioPlayer.paused;
+                centerPlayPauseBtn.disabled = !currentPlayingId;
+                
+                if (isPlaying) {
+                    centerPlayIcon.classList.add('hidden');
+                    centerPauseIcon.classList.remove('hidden');
+                } else {
+                    centerPlayIcon.classList.remove('hidden');
+                    centerPauseIcon.classList.add('hidden');
+                }
+            }
+
             // Tab functionality
             function switchTab(activeTab, activeContent) {
                 // Reset all tabs
@@ -2516,6 +2560,7 @@ service firebase.storage {
             if (isThisPodcastPlaying) {
                 audioPlayer.pause();
                 updateSinglePodcastUI(id);
+                updateCenterPlayButton();
             } else {
                 const oldPlayingId = currentPlayingId;
                 currentPlayingId = id;
