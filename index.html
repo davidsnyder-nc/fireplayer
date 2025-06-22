@@ -883,6 +883,13 @@ service firebase.storage {
 
                     // Add episodes to Firebase if available, otherwise show error
                     if (typeof db !== 'undefined' && db) {
+                        // Save the RSS feed URL for tracking
+                        await addDoc(collection(db, 'rss_feeds'), { 
+                            url: url, 
+                            addedAt: serverTimestamp() 
+                        });
+
+                        // Add episodes to podcasts collection
                         for (const episode of episodes) {
                             await addDoc(collection(db, 'podcasts-data', 'public', 'podcasts'), {
                                 name: episode.title,
@@ -895,6 +902,11 @@ service firebase.storage {
                                 source: 'rss'
                             });
                         }
+                        
+                        // Reload RSS feeds list and podcasts
+                        loadRssFeeds();
+                        loadPodcasts();
+                        
                         showNotification(`Successfully imported ${episodes.length} episodes!`, 'success');
                     } else {
                         showNotification('Firebase not configured. Please set up Firebase to import RSS feeds.', 'error');
@@ -1083,6 +1095,47 @@ service firebase.storage {
                 const scrubberHandle = element.querySelector('.scrubber-handle');
                 if(scrubberHandle) scrubberHandle.style.left = `${progressPercent}%`;
             });
+        }
+
+        // Load RSS feeds from Firestore
+        async function loadRssFeeds() {
+            try {
+                const rssCol = collection(db, 'rss_feeds');
+                const rssSnapshot = await getDocs(rssCol);
+                
+                if (!rssSnapshot.empty) {
+                    document.getElementById('rssFeedsContainer').classList.remove('hidden');
+                    const rssFeedsList = document.getElementById('rssFeedsList');
+                    rssFeedsList.innerHTML = '';
+                    
+                    rssSnapshot.forEach(doc => {
+                        const feed = doc.data();
+                        const feedElement = document.createElement('div');
+                        feedElement.className = 'themed rounded-lg p-3 flex justify-between items-center';
+                        feedElement.innerHTML = `
+                            <span class="themed-text-primary">${feed.url}</span>
+                            <button onclick="deleteFeed('${doc.id}')" class="themed-button-danger px-3 py-1 rounded text-sm">
+                                Remove
+                            </button>
+                        `;
+                        rssFeedsList.appendChild(feedElement);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading RSS feeds:', error);
+            }
+        }
+
+        // Delete RSS feed
+        async function deleteFeed(feedId) {
+            try {
+                await deleteDoc(doc(db, 'rss_feeds', feedId));
+                loadRssFeeds();
+                showNotification('RSS feed removed', 'success');
+            } catch (error) {
+                console.error('Error deleting feed:', error);
+                showNotification('Failed to remove RSS feed', 'error');
+            }
         }
 
         // RSS Feed parsing function
