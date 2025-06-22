@@ -1593,56 +1593,54 @@ service firebase.storage {
                     `;
 
                 } else {
-                    // Improved list view with larger artwork
-                    podcastElement.className = 'podcast-item themed rounded-xl p-6 mb-4 shadow-lg transition-all duration-300 hover:shadow-xl';
+                    // Mobile-optimized list view
+                    podcastElement.className = 'podcast-item themed rounded-xl p-4 sm:p-6 mb-4 shadow-lg transition-all duration-300 hover:shadow-xl';
                     podcastElement.innerHTML = `
-                        <div class="flex items-start space-x-6">
+                        <div class="flex flex-col sm:flex-row sm:items-start space-y-4 sm:space-y-0 sm:space-x-6">
                             <!-- Large Artwork -->
-                            <div class="flex-shrink-0">
-                                <img src="${podcast.artworkUrl || defaultArtwork}" class="w-32 h-32 object-cover rounded-xl shadow-md" onerror="this.src='${defaultArtwork}'">
+                            <div class="flex-shrink-0 self-center sm:self-start">
+                                <img src="${podcast.artworkUrl || defaultArtwork}" class="w-24 h-24 sm:w-32 sm:h-32 object-cover rounded-xl shadow-md" onerror="this.src='${defaultArtwork}'">
                             </div>
                             
                             <!-- Content -->
                             <div class="flex-grow min-w-0">
-                                <div class="flex items-start justify-between mb-3">
-                                    <div class="flex-grow">
-                                        <h3 class="font-bold text-xl mb-2 line-clamp-2 themed-text-primary">${podcast.name}</h3>
-                                        ${podcast.description ? `<p class="text-sm themed-text-secondary line-clamp-3 mb-3">${podcast.description}</p>` : ''}
-                                        <div class="flex items-center space-x-4 text-sm themed-text-secondary">
-                                            <span>${formatTime(podcast.playbackPosition)} / ${formatTime(podcast.duration)}</span>
-                                            ${podcast.podcastTitle ? `<span>•</span><span>${podcast.podcastTitle}</span>` : ''}
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- Action Buttons -->
-                                    <div class="flex items-center space-x-3 ml-4">
-                                        <button data-id="${podcast.id}" class="restart-btn themed-button-secondary rounded-xl p-3 hover:scale-105 transition-all shadow-md">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                            </svg>
-                                        </button>
-                                        <button data-id="${podcast.id}" class="play-pause-btn bg-orange-500 hover:bg-orange-600 rounded-xl p-3 transition-all transform hover:scale-105 shadow-lg">
-                                            ${isPlaying ? 
-                                                '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>' :
-                                                '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>'
-                                            }
-                                        </button>
-                                        ${isPlayedList ? `<button data-id="${podcast.id}" class="move-to-library-btn themed-button-secondary rounded-xl p-3 hover:scale-105 transition-all shadow-md hover:bg-green-500">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h2a2 2 0 012 2v0M9 12l2 2 4-4" />
-                                            </svg>
-                                        </button>` : ''}
-                                        <button data-id="${podcast.id}" data-storage-path="${podcast.storagePath}" class="delete-btn themed-button-danger rounded-xl p-3 hover:scale-105 transition-all shadow-md">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                            </svg>
-                                        </button>
+                                <div class="mb-3">
+                                    <h3 class="font-bold text-lg sm:text-xl mb-2 line-clamp-2 themed-text-primary">${podcast.name}</h3>
+                                    ${podcast.description ? `<p class="text-sm themed-text-secondary line-clamp-2 sm:line-clamp-3 mb-3">${podcast.description}</p>` : ''}
+                                    <div class="flex flex-wrap items-center gap-2 text-sm themed-text-secondary mb-3">
+                                        <span>${formatTime(podcast.playbackPosition)} / ${formatTime(podcast.duration)}</span>
+                                        ${podcast.podcastTitle ? `<span>•</span><span class="truncate">${podcast.podcastTitle}</span>` : ''}
                                     </div>
                                 </div>
                                 
+                                <!-- Action Buttons - Mobile Optimized -->
+                                <div class="flex items-center justify-center sm:justify-end space-x-2 sm:space-x-3 mb-4">
+                                    <button data-id="${podcast.id}" class="restart-btn themed-button-secondary rounded-full sm:rounded-xl p-2 sm:p-3 hover:scale-105 transition-all shadow-md">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                        </svg>
+                                    </button>
+                                    <button data-id="${podcast.id}" class="play-pause-btn bg-orange-500 hover:bg-orange-600 rounded-full sm:rounded-xl p-3 sm:p-4 transition-all transform hover:scale-105 shadow-lg">
+                                        ${isPlaying ? 
+                                            '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>' :
+                                            '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>'
+                                        }
+                                    </button>
+                                    ${isPlayedList ? `<button data-id="${podcast.id}" class="move-to-library-btn themed-button-secondary rounded-full sm:rounded-xl p-2 sm:p-3 hover:scale-105 transition-all shadow-md hover:bg-green-500">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h2a2 2 0 012 2v0M9 12l2 2 4-4" />
+                                        </svg>
+                                    </button>` : ''}
+                                    <button data-id="${podcast.id}" data-storage-path="${podcast.storagePath}" class="delete-btn themed-button-danger rounded-full sm:rounded-xl p-2 sm:p-3 hover:scale-105 transition-all shadow-md">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                    </button>
+                                </div>
+                                
                                 <!-- Progress Bar -->
-                                <div data-id="${podcast.id}" class="progress-bar-wrapper w-full rounded-full h-2 cursor-pointer relative bg-gray-200 dark:bg-gray-700 mt-4">
+                                <div data-id="${podcast.id}" class="progress-bar-wrapper w-full rounded-full h-2 cursor-pointer relative bg-gray-200 dark:bg-gray-700">
                                     <div class="progress-bar h-full rounded-full pointer-events-none bg-orange-500" style="width: ${progressPercent}%;"></div>
                                     <div class="scrubber-handle opacity-0" style="left: ${progressPercent}%"></div>
                                 </div>
