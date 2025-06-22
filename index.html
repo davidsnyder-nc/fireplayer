@@ -1545,13 +1545,13 @@ service firebase.storage {
                         } else {
                             audioPlayer.play().catch(e => console.error("Play error:", e));
                         }
-                        updateCenterPlayButton();
+                        window.updateCenterPlayButton();
                     }
                 });
             }
 
-            // Update center play button state
-            function updateCenterPlayButton() {
+            // Update center play button state - make it globally accessible
+            window.updateCenterPlayButton = function() {
                 if (!centerPlayPauseBtn) return;
                 
                 const isPlaying = currentPlayingId && !audioPlayer.paused;
@@ -2578,7 +2578,7 @@ service firebase.storage {
             if (isThisPodcastPlaying) {
                 audioPlayer.pause();
                 updateSinglePodcastUI(id);
-                updateCenterPlayButton();
+                window.updateCenterPlayButton();
             } else {
                 const oldPlayingId = currentPlayingId;
                 currentPlayingId = id;
