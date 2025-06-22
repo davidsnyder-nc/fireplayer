@@ -191,6 +191,18 @@
             transform: scale(1.1);
         }
         
+        /* Currently playing item styling */
+        .currently-playing {
+            border: 2px solid #f97316 !important;
+            background: rgba(249, 115, 22, 0.1) !important;
+            transform: scale(1.02);
+            box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3) !important;
+        }
+        
+        .theme-light .currently-playing {
+            background: rgba(249, 115, 22, 0.05) !important;
+        }
+        
         /* Custom range slider styling */
         .themed-slider {
             -webkit-appearance: none;
@@ -2650,6 +2662,9 @@ service firebase.storage {
                 currentPlayingId = id;
                 if (oldPlayingId && oldPlayingId !== id) {
                     updateSinglePodcastUI(oldPlayingId);
+                    // Remove playing state from old item
+                    const oldElement = document.querySelector(`[data-id="${oldPlayingId}"]`)?.closest('.podcast-item');
+                    if (oldElement) oldElement.classList.remove('currently-playing');
                 }
 
                 if (audioPlayer.src !== podcast.url) {
