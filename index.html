@@ -1,0 +1,1139 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fire Player</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #111827;
+            --bg-secondary: #1f2937;
+            --bg-tertiary: #374151;
+            --bg-tertiary-hover: #4b5563;
+            --text-primary: #ffffff;
+            --text-secondary: #9ca3af;
+            --text-accent: #fb923c;
+            --accent-primary: #f97316;
+            --accent-primary-hover: #ea580c;
+            --accent-danger: #dc2626;
+            --accent-danger-hover: #b91c1c;
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #f9fafb;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #e5e7eb;
+            --bg-tertiary-hover: #d1d5db;
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --text-accent: #f97316;
+            --accent-primary: #f97316;
+            --accent-primary-hover: #ea580c;
+            --accent-danger: #ef4444;
+            --accent-danger-hover: #dc2626;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            transition: background-color 0.3s, color 0.3s;
+            padding-bottom: 80px; 
+            overflow-x: hidden;
+            position: relative;
+        }
+        
+        #background-effects {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        .smoke {
+            position: absolute;
+            bottom: -200px;
+            background: rgba(251, 146, 60, 0.05);
+            border-radius: 50%;
+            filter: blur(60px);
+            animation-timing-function: linear;
+            animation-iteration-count: infinite;
+        }
+
+        .smoke-1 {
+            width: 300px;
+            height: 300px;
+            left: 5%;
+            animation-name: smoke-rise-1;
+            animation-duration: 25s;
+        }
+
+        .smoke-2 {
+            width: 400px;
+            height: 400px;
+            left: 40%;
+            animation-name: smoke-rise-2;
+            animation-duration: 35s;
+            animation-delay: 5s;
+        }
+        
+        .smoke-3 {
+            width: 250px;
+            height: 250px;
+            left: 75%;
+            animation-name: smoke-rise-3;
+            animation-duration: 20s;
+            animation-delay: 10s;
+        }
+        
+        @keyframes smoke-rise-1 {
+            0% { transform: translateY(0) scale(1) translateX(0); opacity: 0; }
+            20% { opacity: 0.1; }
+            100% { transform: translateY(-120vh) scale(1.8) translateX(20px); opacity: 0; }
+        }
+        @keyframes smoke-rise-2 {
+            0% { transform: translateY(0) scale(1) translateX(0); opacity: 0; }
+            20% { opacity: 0.08; }
+            100% { transform: translateY(-120vh) scale(1.6) translateX(-30px); opacity: 0; }
+        }
+        @keyframes smoke-rise-3 {
+            0% { transform: translateY(0) scale(1) translateX(0); opacity: 0; }
+            20% { opacity: 0.12; }
+            100% { transform: translateY(-120vh) scale(1.9) translateX(10px); opacity: 0; }
+        }
+
+        .themed {
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            border-color: var(--bg-tertiary);
+        }
+        .themed-input, textarea.themed-input {
+             background-color: var(--bg-tertiary);
+             color: var(--text-primary);
+        }
+        .themed-input::placeholder {
+            color: var(--text-secondary);
+        }
+        .themed-button-primary {
+            background-color: var(--accent-primary);
+            color: white;
+        }
+        .themed-button-primary:hover {
+            background-color: var(--accent-primary-hover);
+        }
+        .themed-button-secondary {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+        .themed-button-secondary:hover {
+            background-color: var(--bg-tertiary-hover);
+        }
+        .themed-button-danger {
+            background-color: var(--accent-danger);
+            color: white;
+        }
+        .themed-button-danger:hover {
+            background-color: var(--accent-danger-hover);
+        }
+        .themed-text-accent { color: var(--text-accent); }
+        .themed-text-secondary { color: var(--text-secondary); }
+        .themed-icon-button { color: var(--text-secondary); }
+        .themed-icon-button:hover { color: var(--text-accent); }
+        .control-active {
+            color: var(--text-accent) !important;
+        }
+        .dragging {
+            opacity: 0.5;
+            background-color: var(--bg-tertiary);
+        }
+        .scrubber-handle {
+            width: 1rem;
+            height: 1rem;
+            border-radius: 50%;
+            background-color: white;
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            margin-left: -0.5rem; 
+            cursor: grab;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .progress-bar-wrapper:hover .scrubber-handle {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <div id="background-effects">
+        <div class="smoke smoke-1"></div>
+        <div class="smoke smoke-2"></div>
+        <div class="smoke smoke-3"></div>
+    </div>
+
+    <div id="app" class="container mx-auto max-w-4xl p-4 sm:p-6 lg:p-8">
+        <header class="mb-8 flex justify-center items-center">
+            <div class="text-center flex items-center gap-2">
+                 <img src="logo.png"
+                      alt="Fire Player Logo"
+                      class="h-10 w-10"
+                      style="object-fit: contain;"
+                      onerror="this.onerror=null; this.src='https://cdn.pixabay.com/photo/2022/07/21/11/48/fire-7336074_960_720.png';">
+                 <h1 class="text-3xl sm:text-4xl font-bold themed-text-accent whitespace-nowrap">Fire Player</h1>
+            </div>
+        </header>
+
+        <div class="flex justify-between items-center mb-4">
+            <div id="uploadContainer">
+                <button id="showUploadFormBtn" class="themed-button-primary font-bold py-2 px-4 rounded-md transition-transform duration-200 transform hover:scale-105">
+                    Add New
+                </button>
+            </div>
+            <div class="flex items-center gap-2">
+                <button id="viewToggleBtn" class="themed-icon-button p-2 rounded-full">
+                    <svg id="icon-grid-view" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+                    <svg id="icon-list-view" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
+                </button>
+            </div>
+        </div>
+
+        <div id="uploadSection" class="themed rounded-lg p-6 mb-8 shadow-lg hidden">
+            <h2 class="text-2xl font-semibold mb-4">Add New Podcast</h2>
+            <div class="space-y-4">
+                 <div>
+                    <label for="fileInput" class="w-full flex-grow themed-button-secondary font-bold py-3 px-6 rounded-md cursor-pointer hover:bg-gray-600 transition-colors duration-200 truncate block text-center">
+                        Choose File to Upload...
+                    </label>
+                     <input type="file" id="fileInput" accept="audio/*" class="hidden">
+                 </div>
+                 <div class="flex items-center space-x-2">
+                    <hr class="flex-grow border-t border-gray-600">
+                    <span class="themed-text-secondary">OR</span>
+                    <hr class="flex-grow border-t border-gray-600">
+                 </div>
+                 <div>
+                    <label for="urlInput" class="block text-sm font-medium themed-text-secondary mb-1">Import from URL</label>
+                    <div class="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4">
+                        <input type="text" id="urlInput" placeholder="Paste an audio URL here..." class="w-full flex-grow themed-input rounded-md px-4 py-3">
+                        <button id="importUrlBtn" class="w-full sm:w-auto flex-shrink-0 themed-button-secondary font-bold py-3 px-6 rounded-md">Import</button>
+                    </div>
+                </div>
+                 <div class="flex items-center space-x-2">
+                    <hr class="flex-grow border-t border-gray-600">
+                    <span class="themed-text-secondary">OR</span>
+                    <hr class="flex-grow border-t border-gray-600">
+                 </div>
+                 <div>
+                     <label for="rssInput" class="block text-sm font-medium themed-text-secondary mb-1">Add RSS Feed</label>
+                    <div class="mt-1 flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4">
+                        <input type="text" id="rssInput" placeholder="Paste an RSS Feed URL here..." class="w-full flex-grow themed-input rounded-md px-4 py-3">
+                        <input type="number" id="rssLimit" min="1" max="10" value="5" class="w-20 themed-input rounded-md px-4 py-3">
+                        <button id="addRssBtn" class="w-full sm:w-auto flex-shrink-0 themed-button-secondary font-bold py-3 px-6 rounded-md">Add Feed</button>
+                    </div>
+                 </div>
+            </div>
+            <div id="uploadProgressContainer" class="mt-4 hidden">
+                 <div class="w-full bg-gray-700 rounded-full h-2.5">
+                    <div id="uploadProgressBar" class="h-2.5 rounded-full" style="width: 0%; background-color: var(--text-accent);"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="rssFeedsContainer" class="mb-8 hidden">
+             <h2 class="text-2xl font-semibold mb-4">My Feeds</h2>
+             <div id="rssFeedsList" class="space-y-2"></div>
+        </div>
+
+        <div>
+            <h2 id="libraryTitle" class="text-2xl font-semibold mb-4 hidden">My Library</h2>
+            <div id="podcastListContainer">
+                <p id="loadingMessage" class="themed-text-secondary text-center py-4">Initializing...</p>
+            </div>
+        </div>
+
+        <div id="playedContainer" class="mt-12 hidden">
+            <h2 id="playedTitle" class="text-2xl font-semibold mb-4">Played</h2>
+            <div id="playedListContainer"></div>
+        </div>
+
+        <audio id="audioPlayer" class="hidden"></audio>
+        
+        <footer class="fixed bottom-0 left-0 right-0 p-4 themed border-t" style="border-color: var(--bg-tertiary-hover)">
+            <div class="container mx-auto max-w-2xl flex justify-around items-center">
+                 <button id="themeToggleButton" class="themed-icon-button p-2 rounded-full transition-colors">
+                    <svg id="theme-icon-dark" xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                    </svg>
+                    <svg id="theme-icon-light" xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                </button>
+                <div id="playerControls" class="flex items-center gap-4">
+                    <button id="prevBtn" class="themed-icon-button p-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0019 16V8a1 1 0 00-1.6-.8l-5.334 4zM4.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0011 16V8a1 1 0 00-1.6-.8l-5.334 4z" />
+                        </svg>
+                    </button>
+                    <button id="playPauseBtn" class="themed-button-primary p-3 rounded-full">
+                        <svg id="playIcon" xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h1m4 0h1M9 16V8a2 2 0 012-2h2a2 2 0 012 2v8a2 2 0 01-2 2H11a2 2 0 01-2-2z" />
+                        </svg>
+                        <svg id="pauseIcon" xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </button>
+                    <button id="nextBtn" class="themed-icon-button p-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.933 12.8a1 1 0 000-1.6L6.6 7.2A1 1 0 005 8v8a1 1 0 001.6.8l5.333-4zM19.933 12.8a1 1 0 000-1.6l-5.333-4A1 1 0 0013 8v8a1 1 0 001.6.8l5.333-4z" />
+                        </svg>
+                    </button>
+                </div>
+                <button id="speedBtn" class="themed-icon-button px-3 py-2 rounded-md text-sm font-medium">1x</button>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAUZyPO8GKhLGMv-o_MjBdtGMLjdZfgKaM",
+            authDomain: "fire-player-65dcf.firebaseapp.com",
+            projectId: "fire-player-65dcf",
+            storageBucket: "fire-player-65dcf.appspot.com",
+            messagingSenderId: "848968516823",
+            appId: "1:848968516823:web:5a1a2b2f2e6c7d8e9f0a1b"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const storage = firebase.storage();
+
+        // App state
+        let podcasts = [];
+        let currentPodcast = null;
+        let currentView = 'grid';
+        let currentTheme = 'dark';
+        let currentSpeed = 1;
+        let rssFeeds = [];
+
+        // DOM Elements
+        const audioPlayer = document.getElementById('audioPlayer');
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        const playIcon = document.getElementById('playIcon');
+        const pauseIcon = document.getElementById('pauseIcon');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const speedBtn = document.getElementById('speedBtn');
+        const fileInput = document.getElementById('fileInput');
+        const urlInput = document.getElementById('urlInput');
+        const rssInput = document.getElementById('rssInput');
+        const rssLimit = document.getElementById('rssLimit');
+        const addRssBtn = document.getElementById('addRssBtn');
+        const importUrlBtn = document.getElementById('importUrlBtn');
+        const showUploadFormBtn = document.getElementById('showUploadFormBtn');
+        const uploadSection = document.getElementById('uploadSection');
+        const uploadProgressContainer = document.getElementById('uploadProgressContainer');
+        const uploadProgressBar = document.getElementById('uploadProgressBar');
+        const podcastListContainer = document.getElementById('podcastListContainer');
+        const playedListContainer = document.getElementById('playedListContainer');
+        const rssFeedsContainer = document.getElementById('rssFeedsContainer');
+        const rssFeedsList = document.getElementById('rssFeedsList');
+        const viewToggleBtn = document.getElementById('viewToggleBtn');
+        const themeToggleButton = document.getElementById('themeToggleButton');
+        const libraryTitle = document.getElementById('libraryTitle');
+        const playedTitle = document.getElementById('playedTitle');
+        const playedContainer = document.getElementById('playedContainer');
+        const loadingMessage = document.getElementById('loadingMessage');
+
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', initializeApp);
+        showUploadFormBtn.addEventListener('click', toggleUploadForm);
+        fileInput.addEventListener('change', handleFileUpload);
+        importUrlBtn.addEventListener('click', handleUrlImport);
+        addRssBtn.addEventListener('click', handleRssImport);
+        playPauseBtn.addEventListener('click', togglePlayPause);
+        prevBtn.addEventListener('click', playPrevious);
+        nextBtn.addEventListener('click', playNext);
+        speedBtn.addEventListener('click', cycleSpeed);
+        viewToggleBtn.addEventListener('click', toggleView);
+        themeToggleButton.addEventListener('click', toggleTheme);
+
+        // Initialize the app
+        async function initializeApp() {
+            console.log('Initializing Fire Player...');
+            
+            // Load theme preference
+            const savedTheme = localStorage.getItem('firePlayerTheme') || 'dark';
+            setTheme(savedTheme);
+            
+            // Load view preference
+            const savedView = localStorage.getItem('firePlayerView') || 'grid';
+            setView(savedView);
+            
+            try {
+                await Promise.all([loadPodcasts(), loadRssFeeds()]);
+                console.log('App initialized successfully');
+            } catch (error) {
+                console.error('Error initializing app:', error);
+                loadingMessage.textContent = 'Error loading podcasts. Please try refreshing the page.';
+            }
+        }
+
+        // Load podcasts from Firebase
+        async function loadPodcasts() {
+            try {
+                const snapshot = await db.collection('podcasts').orderBy('dateAdded', 'desc').get();
+                podcasts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                
+                console.log(`Loaded ${podcasts.length} podcasts`);
+                renderPodcasts();
+                
+                if (podcasts.length === 0) {
+                    loadingMessage.textContent = 'No podcasts yet. Add some using the "Add New" button above.';
+                    loadingMessage.classList.remove('hidden');
+                    libraryTitle.classList.add('hidden');
+                } else {
+                    loadingMessage.classList.add('hidden');
+                    libraryTitle.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Error loading podcasts:', error);
+                loadingMessage.textContent = 'Error loading podcasts. Please check your connection.';
+            }
+        }
+
+        // Load RSS feeds from Firebase
+        async function loadRssFeeds() {
+            try {
+                const snapshot = await db.collection('rssFeeds').get();
+                rssFeeds = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                
+                if (rssFeeds.length > 0) {
+                    rssFeedsContainer.classList.remove('hidden');
+                    renderRssFeeds();
+                } else {
+                    rssFeedsContainer.classList.add('hidden');
+                }
+            } catch (error) {
+                console.error('Error loading RSS feeds:', error);
+            }
+        }
+
+        // RSS Feed import functionality (FIXED)
+        async function handleRssImport() {
+            const rssUrl = rssInput.value.trim();
+            const limit = parseInt(rssLimit.value) || 5;
+            
+            if (!rssUrl) {
+                alert('Please enter an RSS feed URL');
+                return;
+            }
+
+            // Validate URL format
+            try {
+                new URL(rssUrl);
+            } catch (error) {
+                alert('Please enter a valid URL');
+                return;
+            }
+
+            console.log('Importing RSS feed:', rssUrl);
+            addRssBtn.textContent = 'Importing...';
+            addRssBtn.disabled = true;
+
+            try {
+                // Use CORS proxy to fetch RSS feed
+                const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(rssUrl)}`;
+                const response = await fetch(proxyUrl);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (!data.contents) {
+                    throw new Error('No content received from RSS feed');
+                }
+
+                // Parse the RSS XML
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(data.contents, 'text/xml');
+                
+                // Check for parsing errors
+                const parseError = xmlDoc.querySelector('parsererror');
+                if (parseError) {
+                    throw new Error('Invalid XML format in RSS feed');
+                }
+
+                // Extract podcast information
+                const channel = xmlDoc.querySelector('channel');
+                if (!channel) {
+                    throw new Error('Invalid RSS feed format - no channel found');
+                }
+
+                const feedTitle = channel.querySelector('title')?.textContent || 'Unknown Podcast';
+                const feedDescription = channel.querySelector('description')?.textContent || '';
+                const feedImage = channel.querySelector('image url')?.textContent || 
+                                 channel.querySelector('itunes\\:image')?.getAttribute('href') || '';
+
+                // Get items (episodes)
+                const items = Array.from(xmlDoc.querySelectorAll('item')).slice(0, limit);
+                
+                if (items.length === 0) {
+                    throw new Error('No podcast episodes found in RSS feed');
+                }
+
+                console.log(`Found ${items.length} episodes in RSS feed`);
+
+                // Save RSS feed to Firebase
+                const feedDoc = await db.collection('rssFeeds').add({
+                    url: rssUrl,
+                    title: feedTitle,
+                    description: feedDescription,
+                    image: feedImage,
+                    dateAdded: firebase.firestore.FieldValue.serverTimestamp(),
+                    episodeCount: items.length
+                });
+
+                // Process each episode
+                let successCount = 0;
+                const batch = db.batch();
+
+                for (const item of items) {
+                    try {
+                        const title = item.querySelector('title')?.textContent || 'Untitled Episode';
+                        const description = item.querySelector('description')?.textContent || '';
+                        const pubDate = item.querySelector('pubDate')?.textContent || '';
+                        const duration = item.querySelector('itunes\\:duration')?.textContent || '';
+                        
+                        // Find audio enclosure
+                        const enclosure = item.querySelector('enclosure[type*="audio"]');
+                        if (!enclosure) {
+                            console.warn(`No audio enclosure found for episode: ${title}`);
+                            continue;
+                        }
+
+                        const audioUrl = enclosure.getAttribute('url');
+                        if (!audioUrl) {
+                            console.warn(`No audio URL found for episode: ${title}`);
+                            continue;
+                        }
+
+                        const podcastData = {
+                            title: title,
+                            description: description,
+                            audioUrl: audioUrl,
+                            feedTitle: feedTitle,
+                            feedUrl: rssUrl,
+                            feedId: feedDoc.id,
+                            image: feedImage,
+                            pubDate: pubDate,
+                            duration: duration,
+                            dateAdded: firebase.firestore.FieldValue.serverTimestamp(),
+                            source: 'rss',
+                            currentTime: 0,
+                            played: false
+                        };
+
+                        const docRef = db.collection('podcasts').doc();
+                        batch.set(docRef, podcastData);
+                        successCount++;
+
+                    } catch (itemError) {
+                        console.error('Error processing episode:', itemError);
+                    }
+                }
+
+                if (successCount === 0) {
+                    throw new Error('No valid episodes could be imported from the RSS feed');
+                }
+
+                // Commit the batch
+                await batch.commit();
+
+                console.log(`Successfully imported ${successCount} episodes`);
+                
+                // Refresh the UI
+                await Promise.all([loadPodcasts(), loadRssFeeds()]);
+                
+                // Clear the input and show success message
+                rssInput.value = '';
+                alert(`Successfully imported ${successCount} episodes from "${feedTitle}"`);
+
+            } catch (error) {
+                console.error('Error importing RSS feed:', error);
+                let errorMessage = 'Failed to import RSS feed. ';
+                
+                if (error.message.includes('CORS')) {
+                    errorMessage += 'The RSS feed server does not allow cross-origin requests.';
+                } else if (error.message.includes('Invalid XML')) {
+                    errorMessage += 'The RSS feed contains invalid XML.';
+                } else if (error.message.includes('No channel found')) {
+                    errorMessage += 'This does not appear to be a valid RSS feed.';
+                } else if (error.message.includes('No podcast episodes found')) {
+                    errorMessage += 'No episodes were found in this RSS feed.';
+                } else {
+                    errorMessage += error.message;
+                }
+                
+                alert(errorMessage);
+            } finally {
+                addRssBtn.textContent = 'Add Feed';
+                addRssBtn.disabled = false;
+            }
+        }
+
+        // Render RSS feeds
+        function renderRssFeeds() {
+            rssFeedsList.innerHTML = '';
+            
+            rssFeeds.forEach(feed => {
+                const feedElement = document.createElement('div');
+                feedElement.className = 'themed rounded-lg p-4 flex items-center justify-between';
+                feedElement.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        ${feed.image ? `<img src="${feed.image}" alt="${feed.title}" class="w-12 h-12 rounded-lg object-cover">` : ''}
+                        <div>
+                            <h3 class="font-semibold">${feed.title}</h3>
+                            <p class="text-sm themed-text-secondary">${feed.episodeCount || 0} episodes</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="refreshRssFeed('${feed.id}')" class="themed-button-secondary px-3 py-1 rounded text-sm">
+                            Refresh
+                        </button>
+                        <button onclick="removeRssFeed('${feed.id}')" class="themed-button-danger px-3 py-1 rounded text-sm">
+                            Remove
+                        </button>
+                    </div>
+                `;
+                rssFeedsList.appendChild(feedElement);
+            });
+        }
+
+        // Refresh RSS feed
+        async function refreshRssFeed(feedId) {
+            const feed = rssFeeds.find(f => f.id === feedId);
+            if (!feed) return;
+
+            console.log('Refreshing RSS feed:', feed.url);
+            
+            try {
+                // Temporarily update the feed
+                const oldRssInput = rssInput.value;
+                const oldRssLimit = rssLimit.value;
+                
+                rssInput.value = feed.url;
+                rssLimit.value = '5'; // Default limit for refresh
+                
+                await handleRssImport();
+                
+                // Restore original values
+                rssInput.value = oldRssInput;
+                rssLimit.value = oldRssLimit;
+                
+            } catch (error) {
+                console.error('Error refreshing RSS feed:', error);
+                alert('Failed to refresh RSS feed');
+            }
+        }
+
+        // Remove RSS feed
+        async function removeRssFeed(feedId) {
+            if (!confirm('Are you sure you want to remove this RSS feed? This will not delete the imported episodes.')) {
+                return;
+            }
+
+            try {
+                await db.collection('rssFeeds').doc(feedId).delete();
+                await loadRssFeeds();
+                console.log('RSS feed removed successfully');
+            } catch (error) {
+                console.error('Error removing RSS feed:', error);
+                alert('Failed to remove RSS feed');
+            }
+        }
+
+        // Handle file upload
+        async function handleFileUpload() {
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            console.log('Uploading file:', file.name);
+            showUploadProgress();
+
+            try {
+                // Upload file to Firebase Storage
+                const storageRef = storage.ref(`podcasts/${Date.now()}_${file.name}`);
+                const uploadTask = storageRef.put(file);
+
+                uploadTask.on('state_changed',
+                    (snapshot) => {
+                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                        updateUploadProgress(progress);
+                    },
+                    (error) => {
+                        console.error('Upload error:', error);
+                        hideUploadProgress();
+                        alert('Upload failed. Please try again.');
+                    },
+                    async () => {
+                        try {
+                            const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
+                            
+                            // Extract metadata using jsmediatags
+                            jsmediatags.read(file, {
+                                onSuccess: async (tag) => {
+                                    const podcastData = {
+                                        title: tag.tags.title || file.name,
+                                        artist: tag.tags.artist || 'Unknown Artist',
+                                        album: tag.tags.album || 'Unknown Album',
+                                        audioUrl: downloadURL,
+                                        fileName: file.name,
+                                        fileSize: file.size,
+                                        dateAdded: firebase.firestore.FieldValue.serverTimestamp(),
+                                        source: 'upload',
+                                        currentTime: 0,
+                                        played: false
+                                    };
+
+                                    await db.collection('podcasts').add(podcastData);
+                                    await loadPodcasts();
+                                    hideUploadProgress();
+                                    fileInput.value = '';
+                                    console.log('File uploaded successfully');
+                                },
+                                onError: async (error) => {
+                                    console.warn('Metadata extraction failed:', error);
+                                    // Still save the podcast without metadata
+                                    const podcastData = {
+                                        title: file.name,
+                                        artist: 'Unknown Artist',
+                                        audioUrl: downloadURL,
+                                        fileName: file.name,
+                                        fileSize: file.size,
+                                        dateAdded: firebase.firestore.FieldValue.serverTimestamp(),
+                                        source: 'upload',
+                                        currentTime: 0,
+                                        played: false
+                                    };
+
+                                    await db.collection('podcasts').add(podcastData);
+                                    await loadPodcasts();
+                                    hideUploadProgress();
+                                    fileInput.value = '';
+                                    console.log('File uploaded successfully (without metadata)');
+                                }
+                            });
+                        } catch (error) {
+                            console.error('Error saving podcast data:', error);
+                            hideUploadProgress();
+                            alert('Upload completed but failed to save metadata. Please try again.');
+                        }
+                    }
+                );
+            } catch (error) {
+                console.error('Upload initiation failed:', error);
+                hideUploadProgress();
+                alert('Failed to start upload. Please try again.');
+            }
+        }
+
+        // Handle URL import
+        async function handleUrlImport() {
+            const url = urlInput.value.trim();
+            if (!url) {
+                alert('Please enter a URL');
+                return;
+            }
+
+            // Validate URL format
+            try {
+                new URL(url);
+            } catch (error) {
+                alert('Please enter a valid URL');
+                return;
+            }
+
+            console.log('Importing from URL:', url);
+            importUrlBtn.textContent = 'Importing...';
+            importUrlBtn.disabled = true;
+
+            try {
+                // Test if URL is accessible
+                const testResponse = await fetch(url, { method: 'HEAD' });
+                if (!testResponse.ok) {
+                    throw new Error(`URL not accessible: ${testResponse.status}`);
+                }
+
+                const contentType = testResponse.headers.get('content-type');
+                if (!contentType || !contentType.includes('audio')) {
+                    console.warn('URL may not be an audio file, but proceeding anyway');
+                }
+
+                // Extract filename from URL
+                const urlObj = new URL(url);
+                const pathname = urlObj.pathname;
+                const filename = pathname.split('/').pop() || 'Unknown';
+
+                const podcastData = {
+                    title: decodeURIComponent(filename),
+                    audioUrl: url,
+                    source: 'url',
+                    dateAdded: firebase.firestore.FieldValue.serverTimestamp(),
+                    currentTime: 0,
+                    played: false
+                };
+
+                await db.collection('podcasts').add(podcastData);
+                await loadPodcasts();
+                
+                urlInput.value = '';
+                console.log('URL imported successfully');
+                alert('Audio imported successfully!');
+
+            } catch (error) {
+                console.error('Error importing URL:', error);
+                alert(`Failed to import URL: ${error.message}`);
+            } finally {
+                importUrlBtn.textContent = 'Import';
+                importUrlBtn.disabled = false;
+            }
+        }
+
+        // Render podcasts
+        function renderPodcasts() {
+            const activePodcasts = podcasts.filter(p => !p.played);
+            const playedPodcasts = podcasts.filter(p => p.played);
+
+            podcastListContainer.innerHTML = '';
+            playedListContainer.innerHTML = '';
+
+            if (activePodcasts.length === 0 && playedPodcasts.length === 0) {
+                loadingMessage.textContent = 'No podcasts yet. Add some using the "Add New" button above.';
+                loadingMessage.classList.remove('hidden');
+                libraryTitle.classList.add('hidden');
+                playedContainer.classList.add('hidden');
+                return;
+            }
+
+            loadingMessage.classList.add('hidden');
+            
+            if (activePodcasts.length > 0) {
+                libraryTitle.classList.remove('hidden');
+                renderPodcastList(activePodcasts, podcastListContainer);
+            } else {
+                libraryTitle.classList.add('hidden');
+            }
+
+            if (playedPodcasts.length > 0) {
+                playedContainer.classList.remove('hidden');
+                renderPodcastList(playedPodcasts, playedListContainer);
+            } else {
+                playedContainer.classList.add('hidden');
+            }
+        }
+
+        // Render podcast list
+        function renderPodcastList(podcastList, container) {
+            if (currentView === 'grid') {
+                container.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6';
+                podcastList.forEach(podcast => {
+                    const podcastElement = createPodcastGridItem(podcast);
+                    container.appendChild(podcastElement);
+                });
+            } else {
+                container.className = 'space-y-4';
+                podcastList.forEach(podcast => {
+                    const podcastElement = createPodcastListItem(podcast);
+                    container.appendChild(podcastElement);
+                });
+            }
+        }
+
+        // Create podcast grid item
+        function createPodcastGridItem(podcast) {
+            const podcastElement = document.createElement('div');
+            podcastElement.className = 'themed rounded-lg p-6 shadow-lg transition-transform duration-200 hover:scale-105';
+            podcastElement.innerHTML = `
+                <div class="text-center">
+                    ${podcast.image ? `<img src="${podcast.image}" alt="${podcast.title}" class="w-24 h-24 mx-auto mb-4 rounded-lg object-cover">` : ''}
+                    <h3 class="text-lg font-semibold mb-2 line-clamp-2">${podcast.title}</h3>
+                    ${podcast.feedTitle ? `<p class="text-sm themed-text-secondary mb-2">${podcast.feedTitle}</p>` : ''}
+                    ${podcast.artist ? `<p class="text-sm themed-text-secondary mb-2">${podcast.artist}</p>` : ''}
+                    ${podcast.duration ? `<p class="text-sm themed-text-secondary mb-4">${podcast.duration}</p>` : ''}
+                    <div class="flex justify-center gap-2">
+                        <button onclick="playPodcast('${podcast.id}')" class="themed-button-primary px-4 py-2 rounded-md">
+                            ${currentPodcast?.id === podcast.id ? 'Resume' : 'Play'}
+                        </button>
+                        <button onclick="deletePodcast('${podcast.id}')" class="themed-button-danger px-4 py-2 rounded-md">
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            `;
+            return podcastElement;
+        }
+
+        // Create podcast list item
+        function createPodcastListItem(podcast) {
+            const podcastElement = document.createElement('div');
+            podcastElement.className = 'themed rounded-lg p-4 flex items-center gap-4';
+            podcastElement.innerHTML = `
+                <div class="flex-shrink-0">
+                    ${podcast.image ? `<img src="${podcast.image}" alt="${podcast.title}" class="w-16 h-16 rounded-lg object-cover">` : 
+                      '<div class="w-16 h-16 bg-gray-600 rounded-lg flex items-center justify-center"><svg class="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path d="M18 3a1 1 0 00-1.196-.98L3 6.84a1 1 0 00-.804.98v5.36a1 1 0 00.804.98l13.804 4.82A1 1 0 0018 17V3z"></path></svg></div>'}
+                </div>
+                <div class="flex-grow min-w-0">
+                    <h3 class="font-semibold truncate">${podcast.title}</h3>
+                    ${podcast.feedTitle ? `<p class="text-sm themed-text-secondary truncate">${podcast.feedTitle}</p>` : ''}
+                    ${podcast.artist ? `<p class="text-sm themed-text-secondary truncate">${podcast.artist}</p>` : ''}
+                    ${podcast.duration ? `<p class="text-sm themed-text-secondary">${podcast.duration}</p>` : ''}
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="playPodcast('${podcast.id}')" class="themed-button-primary px-4 py-2 rounded-md">
+                        ${currentPodcast?.id === podcast.id ? 'Resume' : 'Play'}
+                    </button>
+                    <button onclick="deletePodcast('${podcast.id}')" class="themed-button-danger px-4 py-2 rounded-md">
+                        Delete
+                    </button>
+                </div>
+            `;
+            return podcastElement;
+        }
+
+        // Play podcast
+        async function playPodcast(podcastId) {
+            const podcast = podcasts.find(p => p.id === podcastId);
+            if (!podcast) return;
+
+            console.log('Playing podcast:', podcast.title);
+            currentPodcast = podcast;
+            audioPlayer.src = podcast.audioUrl;
+            
+            if (podcast.currentTime && podcast.currentTime > 0) {
+                audioPlayer.currentTime = podcast.currentTime;
+            }
+            
+            try {
+                await audioPlayer.play();
+                updatePlayButton(true);
+            } catch (error) {
+                console.error('Error playing audio:', error);
+                alert('Failed to play audio. Please check your connection or try a different file.');
+            }
+        }
+
+        // Delete podcast
+        async function deletePodcast(podcastId) {
+            if (!confirm('Are you sure you want to delete this podcast?')) return;
+
+            try {
+                await db.collection('podcasts').doc(podcastId).delete();
+                
+                // If this was the currently playing podcast, stop playback
+                if (currentPodcast?.id === podcastId) {
+                    audioPlayer.pause();
+                    currentPodcast = null;
+                    updatePlayButton(false);
+                }
+                
+                await loadPodcasts();
+                console.log('Podcast deleted successfully');
+            } catch (error) {
+                console.error('Error deleting podcast:', error);
+                alert('Failed to delete podcast. Please try again.');
+            }
+        }
+
+        // Toggle play/pause
+        function togglePlayPause() {
+            if (!currentPodcast) {
+                alert('Please select a podcast to play');
+                return;
+            }
+
+            if (audioPlayer.paused) {
+                audioPlayer.play();
+                updatePlayButton(true);
+            } else {
+                audioPlayer.pause();
+                updatePlayButton(false);
+            }
+        }
+
+        // Update play button
+        function updatePlayButton(isPlaying) {
+            if (isPlaying) {
+                playIcon.classList.add('hidden');
+                pauseIcon.classList.remove('hidden');
+            } else {
+                playIcon.classList.remove('hidden');
+                pauseIcon.classList.add('hidden');
+            }
+        }
+
+        // Play previous
+        function playPrevious() {
+            if (!currentPodcast) return;
+            
+            const currentIndex = podcasts.findIndex(p => p.id === currentPodcast.id);
+            const prevIndex = currentIndex > 0 ? currentIndex - 1 : podcasts.length - 1;
+            playPodcast(podcasts[prevIndex].id);
+        }
+
+        // Play next
+        function playNext() {
+            if (!currentPodcast) return;
+            
+            const currentIndex = podcasts.findIndex(p => p.id === currentPodcast.id);
+            const nextIndex = currentIndex < podcasts.length - 1 ? currentIndex + 1 : 0;
+            playPodcast(podcasts[nextIndex].id);
+        }
+
+        // Cycle playback speed
+        function cycleSpeed() {
+            const speeds = [1, 1.25, 1.5, 1.75, 2];
+            const currentIndex = speeds.indexOf(currentSpeed);
+            const nextIndex = (currentIndex + 1) % speeds.length;
+            currentSpeed = speeds[nextIndex];
+            audioPlayer.playbackRate = currentSpeed;
+            speedBtn.textContent = `${currentSpeed}x`;
+        }
+
+        // Toggle view
+        function toggleView() {
+            currentView = currentView === 'grid' ? 'list' : 'grid';
+            localStorage.setItem('firePlayerView', currentView);
+            setView(currentView);
+            renderPodcasts();
+        }
+
+        // Set view
+        function setView(view) {
+            currentView = view;
+            const gridIcon = document.getElementById('icon-grid-view');
+            const listIcon = document.getElementById('icon-list-view');
+            
+            if (view === 'grid') {
+                gridIcon.classList.remove('hidden');
+                listIcon.classList.add('hidden');
+            } else {
+                gridIcon.classList.add('hidden');
+                listIcon.classList.remove('hidden');
+            }
+        }
+
+        // Toggle theme
+        function toggleTheme() {
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            setTheme(newTheme);
+            localStorage.setItem('firePlayerTheme', newTheme);
+        }
+
+        // Set theme
+        function setTheme(theme) {
+            currentTheme = theme;
+            document.documentElement.setAttribute('data-theme', theme);
+            
+            const darkIcon = document.getElementById('theme-icon-dark');
+            const lightIcon = document.getElementById('theme-icon-light');
+            
+            if (theme === 'dark') {
+                darkIcon.classList.remove('hidden');
+                lightIcon.classList.add('hidden');
+            } else {
+                darkIcon.classList.add('hidden');
+                lightIcon.classList.remove('hidden');
+            }
+        }
+
+        // Toggle upload form
+        function toggleUploadForm() {
+            uploadSection.classList.toggle('hidden');
+        }
+
+        // Show upload progress
+        function showUploadProgress() {
+            uploadProgressContainer.classList.remove('hidden');
+            updateUploadProgress(0);
+        }
+
+        // Update upload progress
+        function updateUploadProgress(progress) {
+            uploadProgressBar.style.width = `${progress}%`;
+        }
+
+        // Hide upload progress
+        function hideUploadProgress() {
+            uploadProgressContainer.classList.add('hidden');
+        }
+
+        // Audio player event listeners
+        audioPlayer.addEventListener('loadedmetadata', () => {
+            console.log('Audio metadata loaded');
+        });
+
+        audioPlayer.addEventListener('timeupdate', async () => {
+            if (currentPodcast && audioPlayer.currentTime > 0) {
+                // Save current time periodically
+                if (Math.floor(audioPlayer.currentTime) % 10 === 0) {
+                    try {
+                        await db.collection('podcasts').doc(currentPodcast.id).update({
+                            currentTime: audioPlayer.currentTime
+                        });
+                    } catch (error) {
+                        console.error('Error saving current time:', error);
+                    }
+                }
+                
+                // Mark as played when 90% complete
+                const progress = audioPlayer.currentTime / audioPlayer.duration;
+                if (progress >= 0.9 && !currentPodcast.played) {
+                    try {
+                        await db.collection('podcasts').doc(currentPodcast.id).update({
+                            played: true,
+                            currentTime: 0
+                        });
+                        currentPodcast.played = true;
+                        await loadPodcasts();
+                    } catch (error) {
+                        console.error('Error marking podcast as played:', error);
+                    }
+                }
+            }
+        });
+
+        audioPlayer.addEventListener('ended', () => {
+            updatePlayButton(false);
+            playNext();
+        });
+
+        audioPlayer.addEventListener('error', (e) => {
+            console.error('Audio playback error:', e);
+            updatePlayButton(false);
+            alert('Error playing audio. The file may be corrupted or unavailable.');
+        });
+
+        // Global functions for inline event handlers
+        window.playPodcast = playPodcast;
+        window.deletePodcast = deletePodcast;
+        window.refreshRssFeed = refreshRssFeed;
+        window.removeRssFeed = removeRssFeed;
+    </script>
+</body>
+</html>
