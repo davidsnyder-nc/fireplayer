@@ -1126,8 +1126,8 @@ service firebase.storage {
             }
         }
 
-        // Delete RSS feed
-        async function deleteFeed(feedId) {
+        // Delete RSS feed - make it globally accessible
+        window.deleteFeed = async function(feedId) {
             try {
                 await deleteDoc(doc(db, 'rss_feeds', feedId));
                 loadRssFeeds();
