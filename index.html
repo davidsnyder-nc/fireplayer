@@ -2394,6 +2394,32 @@ service firebase.storage {
             }
         }
         
+        audioPlayer.addEventListener('loadedmetadata', async () => {
+            if (!currentPlayingId || !podcastsData[currentPlayingId]) return;
+            
+            const podcast = podcastsData[currentPlayingId];
+            const audioDuration = audioPlayer.duration;
+            
+            // Update duration if it's missing (common for RSS episodes) and duration is valid
+            if (podcast.duration === 0 && !isNaN(audioDuration) && audioDuration > 0) {
+                podcast.duration = audioDuration;
+                podcastsData[currentPlayingId].duration = audioDuration;
+                
+                // Update in Firebase
+                try {
+                    await updateDoc(doc(db, 'podcasts-data', 'public', 'podcasts', currentPlayingId), {
+                        duration: audioDuration
+                    });
+                    console.log(`Updated duration for ${podcast.name}: ${audioDuration}s`);
+                } catch (error) {
+                    console.error('Failed to update duration in Firebase:', error);
+                }
+                
+                // Refresh UI to show correct duration
+                updateSinglePodcastUI(currentPlayingId);
+            }
+        });
+
         audioPlayer.addEventListener('timeupdate', () => {
             if (!currentPlayingId || !podcastsData[currentPlayingId] || isScrubbing) return;
             const newPosition = audioPlayer.currentTime;
