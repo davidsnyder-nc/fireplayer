@@ -260,9 +260,28 @@
         </div>
 
         <div>
-            <h2 id="libraryTitle" class="text-2xl font-semibold mb-4 hidden">My Library</h2>
-            <div id="podcastListContainer">
-                <p id="loadingMessage" class="themed-text-secondary text-center py-4">Initializing...</p>
+            <!-- Tab Navigation -->
+            <div class="flex border-b border-gray-600 mb-6">
+                <button id="libraryTab" class="tab-button px-4 py-2 font-semibold themed-text-accent border-b-2 border-orange-500">
+                    My Library
+                </button>
+                <button id="rssEpisodesTab" class="tab-button px-4 py-2 font-semibold themed-text-secondary hover:themed-text-accent">
+                    RSS Episodes
+                </button>
+            </div>
+            
+            <!-- Library Content -->
+            <div id="libraryContent">
+                <div id="podcastListContainer">
+                    <p id="loadingMessage" class="themed-text-secondary text-center py-4">Your library is empty. Upload your first podcast!</p>
+                </div>
+            </div>
+            
+            <!-- RSS Episodes Content -->
+            <div id="rssEpisodesContent" class="hidden">
+                <div id="rssEpisodesContainer">
+                    <p id="rssLoadingMessage" class="themed-text-secondary text-center py-4">No RSS episodes imported yet.</p>
+                </div>
             </div>
         </div>
 
@@ -423,6 +442,10 @@
         const rssInput = document.getElementById('rssInput');
         const addRssBtn = document.getElementById('addRssBtn');
         const refreshFeedsBtn = document.getElementById('refreshFeedsBtn');
+        const libraryTab = document.getElementById('libraryTab');
+        const rssEpisodesTab = document.getElementById('rssEpisodesTab');
+        const libraryContent = document.getElementById('libraryContent');
+        const rssEpisodesContent = document.getElementById('rssEpisodesContent');
         const rssFeedsContainer = document.getElementById('rssFeedsContainer');
         const rssFeedsList = document.getElementById('rssFeedsList');
         
@@ -616,12 +639,15 @@ service firebase.storage {
             closeSettings.addEventListener('click', () => settingsModal.classList.add('hidden'));
         }
 
+        // Load personal library (uploaded files only, excluding RSS)
         function loadPodcasts() {
             if (!firebaseAppInitialized) return;
             if (unsubscribeFromPodcasts) unsubscribeFromPodcasts(); 
             
             const podcastsCol = collection(db, 'podcasts-data', 'public', 'podcasts');
-            unsubscribeFromPodcasts = onSnapshot(podcastsCol, snapshot => {
+            const q = query(podcastsCol, where('source', '!=', 'rss'));
+            
+            unsubscribeFromPodcasts = onSnapshot(q, snapshot => {
                 let allPodcasts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 allPodcasts.sort((a, b) => (a.order ?? Infinity) - (b.order ?? Infinity));
                 
@@ -639,6 +665,60 @@ service firebase.storage {
                 console.error("Error loading podcasts: ", error);
                 loadingMessage.innerHTML = `Error loading library. <button id="openSettingsFromMsg" class="themed-text-accent underline">Check Firestore Rules</button> in settings.`;
                 document.getElementById('openSettingsFromMsg').addEventListener('click', () => settingsModal.classList.remove('hidden'));
+            });
+        }
+
+        // Load RSS episodes separately
+        function loadRssEpisodes() {
+            if (!firebaseAppInitialized) return;
+            
+            const podcastsCol = collection(db, 'podcasts-data', 'public', 'podcasts');
+            const q = query(podcastsCol, where('source', '==', 'rss'));
+            
+            onSnapshot(q, snapshot => {
+                const rssEpisodesData = {};
+                snapshot.forEach(doc => {
+                    rssEpisodesData[doc.id] = { id: doc.id, ...doc.data() };
+                });
+                
+                const activeRssEpisodes = Object.values(rssEpisodesData).filter(p => !p.isPlayed);
+                const playedRssEpisodes = Object.values(rssEpisodesData).filter(p => p.isPlayed);
+                
+                const rssEpisodesContainer = document.getElementById('rssEpisodesContainer');
+                
+                if (activeRssEpisodes.length === 0 && playedRssEpisodes.length === 0) {
+                    rssEpisodesContainer.innerHTML = '<p class="themed-text-secondary text-center py-4">No RSS episodes imported yet.</p>';
+                    return;
+                }
+                
+                // Clear container
+                rssEpisodesContainer.innerHTML = '';
+                
+                // Create active episodes container
+                if (activeRssEpisodes.length > 0) {
+                    const activeContainer = document.createElement('div');
+                    activeContainer.className = viewMode === 'grid' ? 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4' : 'space-y-4';
+                    renderPodcastList(activeRssEpisodes, activeContainer, false);
+                    rssEpisodesContainer.appendChild(activeContainer);
+                }
+                
+                // Add played RSS episodes if any
+                if (playedRssEpisodes.length > 0) {
+                    const playedSection = document.createElement('div');
+                    playedSection.className = 'mt-8';
+                    playedSection.innerHTML = '<h3 class="text-xl font-semibold mb-4">Played RSS Episodes</h3>';
+                    
+                    const playedContainer = document.createElement('div');
+                    playedContainer.className = viewMode === 'grid' ? 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4' : 'space-y-4';
+                    renderPodcastList(playedRssEpisodes, playedContainer, true);
+                    playedSection.appendChild(playedContainer);
+                    rssEpisodesContainer.appendChild(playedSection);
+                }
+                
+            }, error => {
+                console.error("Error loading RSS episodes: ", error);
+                const rssEpisodesContainer = document.getElementById('rssEpisodesContainer');
+                rssEpisodesContainer.innerHTML = '<p class="themed-text-secondary text-center py-4">Error loading RSS episodes.</p>';
             });
         }
         
@@ -917,9 +997,9 @@ service firebase.storage {
                             });
                         }
                         
-                        // Reload RSS feeds list and podcasts
+                        // Reload RSS feeds list and RSS episodes
                         loadRssFeeds();
-                        loadPodcasts();
+                        loadRssEpisodes();
                         
                         showNotification(`Successfully imported ${episodes.length} episodes from ${podcastTitle}!`, 'success');
                     } else {
@@ -999,6 +1079,29 @@ service firebase.storage {
             viewToggleBtn.addEventListener('click', () => {
                 const newMode = viewMode === 'list' ? 'grid' : 'list';
                 setViewMode(newMode);
+            });
+
+            // Tab functionality
+            libraryTab.addEventListener('click', () => {
+                libraryTab.classList.add('themed-text-accent', 'border-b-2', 'border-orange-500');
+                libraryTab.classList.remove('themed-text-secondary');
+                rssEpisodesTab.classList.add('themed-text-secondary');
+                rssEpisodesTab.classList.remove('themed-text-accent', 'border-b-2', 'border-orange-500');
+                
+                libraryContent.classList.remove('hidden');
+                rssEpisodesContent.classList.add('hidden');
+            });
+
+            rssEpisodesTab.addEventListener('click', () => {
+                rssEpisodesTab.classList.add('themed-text-accent', 'border-b-2', 'border-orange-500');
+                rssEpisodesTab.classList.remove('themed-text-secondary');
+                libraryTab.classList.add('themed-text-secondary');
+                libraryTab.classList.remove('themed-text-accent', 'border-b-2', 'border-orange-500');
+                
+                rssEpisodesContent.classList.remove('hidden');
+                libraryContent.classList.add('hidden');
+                
+                loadRssEpisodes(); // Load RSS episodes when tab is clicked
             });
 
             setupSettingsModal();
@@ -1222,7 +1325,7 @@ service firebase.storage {
                 }
                 
                 if (totalNewEpisodes > 0) {
-                    loadPodcasts(); // Refresh the podcast list
+                    loadRssEpisodes(); // Refresh the RSS episodes list
                     showNotification(`Found ${totalNewEpisodes} new episodes!`, 'success');
                 } else {
                     showNotification('No new episodes found', 'info');
@@ -1249,7 +1352,11 @@ service firebase.storage {
                 const feedRef = doc(db, 'rss_feeds', feedId);
                 await deleteDoc(feedRef);
                 console.log('Feed deleted successfully:', feedId);
+                
+                // Immediately update the UI without page refresh
                 loadRssFeeds();
+                loadRssEpisodes();
+                
                 showNotification('RSS feed removed', 'success');
             } catch (error) {
                 console.error('Error deleting feed:', error);
