@@ -1044,21 +1044,79 @@ service firebase.storage {
 
 
         async function handleFileUpload(file, fileNameOverride = null) {
-            if (!file || !userId) return;
+            if (!file || !userId) {
+                console.log('Upload blocked: file or userId missing', { file: !!file, userId: !!userId });
+                return;
+            }
 
-            fileLabel.textContent = "Analyzing...";
-            fileLabel.classList.add('cursor-not-allowed', 'opacity-50');
-            fileInput.disabled = true;
+            try {
+                fileLabel.textContent = "Analyzing...";
+                fileLabel.classList.add('cursor-not-allowed', 'opacity-50');
+                fileInput.disabled = true;
 
-            const [intelligentName, metadata] = await Promise.all([
-                getIntelligentName(fileNameOverride || file.name),
-                getMetadata(file)
-            ]);
-            
-            let finalArtworkUrl = metadata.artworkUrl;
-            if (finalArtworkUrl) {
-                 fileLabel.textContent = "Uploading Artwork...";
-                 finalArtworkUrl = await uploadArtwork(finalArtworkUrl, `artwork_${Date.now()}.png`);
+                const [intelligentName, metadata] = await Promise.all([
+                    getIntelligentName(fileNameOverride || file.name),
+                    getMetadata(file)
+                ]);
+                
+                let finalArtworkUrl = metadata.artworkUrl;
+                if (!finalArtworkUrl) {
+                    fileLabel.textContent = "Generating Artwork...";
+                    finalArtworkUrl = await generateArtwork(intelligentName);
+                }
+
+                fileLabel.textContent = "Uploading File...";
+                const storageRef = ref(storage, `podcasts/${userId}/${Date.now()}_${file.name}`);
+                const uploadTask = uploadBytesResumable(storageRef, file);
+
+                const progressContainer = document.getElementById('uploadProgressContainer');
+                const progressBar = document.getElementById('uploadProgressBar');
+                progressContainer.style.display = 'block';
+
+                uploadTask.on('state_changed',
+                    (snapshot) => {
+                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                        progressBar.style.width = progress + '%';
+                        fileLabel.textContent = `Uploading... ${Math.round(progress)}%`;
+                    },
+                    (error) => {
+                        console.error('Upload failed:', error);
+                        showNotification('Upload failed: ' + error.message, 'error');
+                        resetUploadUI();
+                    },
+                    async () => {
+                        try {
+                            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                            
+                            fileLabel.textContent = "Finalizing...";
+                            
+                            await addDoc(collection(db, 'podcasts-data', 'public', 'podcasts'), {
+                                name: intelligentName,
+                                url: downloadURL,
+                                uploadedAt: serverTimestamp(),
+                                playbackPosition: 0,
+                                duration: 0,
+                                storagePath: uploadTask.snapshot.ref.fullPath,
+                                artworkUrl: finalArtworkUrl,
+                                description: metadata.description,
+                                source: 'upload'
+                            });
+
+                            showNotification('Upload successful!', 'success');
+                            resetUploadUI();
+                        } catch (error) {
+                            console.error('Error saving to database:', error);
+                            showNotification('Upload failed: ' + error.message, 'error');
+                            resetUploadUI();
+                        }
+                    }
+                );
+            } catch (error) {
+                console.error('Upload error:', error);
+                showNotification('Upload failed: ' + error.message, 'error');
+                resetUploadUI();
+            }
+        }inalArtworkUrl = await uploadArtwork(finalArtworkUrl, `artwork_${Date.now()}.png`);
             } else if (currentConfig.geminiApiKey) {
                 fileLabel.textContent = "Creating Artwork...";
                 const generatedArtBase64 = await generateArtwork(intelligentName);
@@ -1162,9 +1220,19 @@ service firebase.storage {
                 uploadSection.classList.toggle('hidden');
                 showUploadFormBtn.textContent = uploadSection.classList.contains('hidden') ? 'Add New Podcast' : 'Close Upload Form';
             });
-            fileInput.addEventListener('change', () => {
-                if(fileInput.files.length > 0) {
-                    handleFileUpload(fileInput.files[0]);
+            fileInput.addEventListener('change', (e) => {
+                console.log('File input changed:', e.target.files);
+                if(e.target.files && e.target.files.length > 0) {
+                    const file = e.target.files[0];
+                    console.log('Selected file:', file.name, file.type, file.size);
+                    if (file.type.startsWith('audio/')) {
+                        handleFileUpload(file);
+                    } else {
+                        showNotification('Please select an audio file', 'error');
+                        fileInput.value = '';
+                    }
+                } else {
+                    console.log('No files selected');
                 }
             });
             importUrlBtn.addEventListener('click', async () => {
