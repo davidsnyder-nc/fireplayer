@@ -1716,15 +1716,15 @@ service firebase.storage {
                     const feedTitle = feed.title || feed.url;
                     
                     feedElement.innerHTML = `
-                        <div class="flex items-center space-x-4">
-                            ${feed.artwork ? `<img src="${feed.artwork}" alt="Podcast artwork" class="w-12 h-12 rounded-md object-cover">` : ''}
-                            <div>
-                                <div class="themed-text-primary font-medium">${feedTitle}</div>
+                        <div class="flex items-center space-x-4 flex-grow min-w-0 mr-4">
+                            ${feed.artwork ? `<img src="${feed.artwork}" alt="Podcast artwork" class="w-12 h-12 rounded-md object-cover flex-shrink-0">` : ''}
+                            <div class="min-w-0 flex-grow">
+                                <div class="themed-text-primary font-medium truncate" title="${feedTitle}">${feedTitle}</div>
                                 <div class="text-xs themed-text-secondary">Last checked: ${lastChecked}</div>
-                                <div class="text-xs themed-text-secondary">${feed.url}</div>
+                                <div class="text-xs themed-text-secondary truncate" title="${feed.url}">${feed.url}</div>
                             </div>
                         </div>
-                        <div class="flex space-x-2">
+                        <div class="flex space-x-2 flex-shrink-0">
                             <button onclick="showFetchMoreModal('${doc.id}', '${feedTitle}', '${feed.url}')" class="themed-button-primary px-3 py-1 rounded text-sm">
                                 Fetch More
                             </button>
