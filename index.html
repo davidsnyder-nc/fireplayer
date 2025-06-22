@@ -1909,6 +1909,18 @@ service firebase.storage {
             fetchMoreModal.dataset.feedTitle = feedTitle;
         }
 
+        // Show edit feed modal
+        window.showEditFeedModal = function(feedId, feedTitle, feedUrl) {
+            const editFeedModal = document.getElementById('editFeedModal');
+            const editFeedName = document.getElementById('editFeedName');
+            const editFeedUrl = document.getElementById('editFeedUrl');
+            
+            editFeedModal.dataset.feedId = feedId;
+            editFeedName.value = feedTitle;
+            editFeedUrl.value = feedUrl;
+            editFeedModal.classList.remove('hidden');
+        }
+
         // Fetch older episodes
         async function fetchOlderEpisodes(feedId, feedUrl, feedTitle, count) {
             try {
