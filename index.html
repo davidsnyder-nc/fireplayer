@@ -190,6 +190,47 @@
         .transform.hover\\:scale-110:hover {
             transform: scale(1.1);
         }
+        
+        /* Custom range slider styling */
+        .themed-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            height: 6px;
+            background: #e5e7eb;
+            outline: none;
+            border-radius: 3px;
+            transition: opacity 0.2s;
+        }
+        
+        .dark .themed-slider {
+            background: #374151;
+        }
+        
+        .themed-slider:hover {
+            opacity: 1;
+        }
+        
+        .themed-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #f97316;
+            cursor: pointer;
+            border-radius: 50%;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            border: 2px solid white;
+        }
+        
+        .themed-slider::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            background: #f97316;
+            cursor: pointer;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
     </style>
 </head>
 <body class="antialiased">
