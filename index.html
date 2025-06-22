@@ -515,13 +515,20 @@
                 db = getFirestore(app);
                 storage = getStorage(app);
                 firebaseAppInitialized = true;
-                showUploadFormBtn.classList.remove('hidden');
+                
+                // Safely access DOM elements with null checks
+                if (showUploadFormBtn) showUploadFormBtn.classList.remove('hidden');
                 setupAuthListener();
-                libraryTitle.classList.remove('hidden');
+                console.log('Firebase initialized successfully');
             } catch (error) {
                 console.error("Firebase initialization failed:", error);
-                loadingMessage.innerHTML = `Firebase init failed: ${error.message}. <button id="openSettingsFromMsg" class="themed-text-accent underline">Check credentials</button>.`;
-                document.getElementById('openSettingsFromMsg').addEventListener('click', () => settingsModal.classList.remove('hidden'));
+                if (loadingMessage) {
+                    loadingMessage.innerHTML = `Firebase init failed: ${error.message}. <button id="openSettingsFromMsg" class="themed-text-accent underline">Check credentials</button>.`;
+                    const settingsBtn = document.getElementById('openSettingsFromMsg');
+                    if (settingsBtn && settingsModal) {
+                        settingsBtn.addEventListener('click', () => settingsModal.classList.remove('hidden'));
+                    }
+                }
                 firebaseAppInitialized = false;
             }
         }
