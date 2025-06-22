@@ -2150,12 +2150,25 @@ service firebase.storage {
         function resetUploadUI() {
             fileInput.value = '';
             fileInput.disabled = false;
-            fileLabel.textContent = 'Choose an audio file to upload...';
-            fileLabel.classList.remove('cursor-not-allowed', 'opacity-50');
+            const fileLabel = document.getElementById('fileLabel');
+            if (fileLabel) {
+                fileLabel.textContent = 'Choose an audio file to upload...';
+                fileLabel.classList.remove('cursor-not-allowed', 'opacity-50');
+            }
             setTimeout(() => {
-                document.getElementById('uploadProgressContainer').style.display = 'none';
-                document.getElementById('uploadProgressBar').style.width = '0%';
-            }, 500);
+                const progressContainer = document.getElementById('uploadProgressContainer');
+                const progressBar = document.getElementById('uploadProgressBar');
+                if (progressContainer) progressContainer.style.display = 'none';
+                if (progressBar) progressBar.style.width = '0%';
+                
+                // Auto-close upload window after successful upload
+                const uploadSection = document.getElementById('uploadSection');
+                const showUploadFormBtn = document.getElementById('showUploadFormBtn');
+                if (uploadSection && showUploadFormBtn) {
+                    uploadSection.classList.add('hidden');
+                    showUploadFormBtn.textContent = 'Add New Podcast';
+                }
+            }, 1000); // Wait 1 second to show completion before closing
         }
 
         document.body.addEventListener('click', e => {
