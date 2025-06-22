@@ -625,56 +625,64 @@
                 
                 <div class="flex-1 overflow-y-auto p-6">
                     <div class="grid grid-cols-1 xl:grid-cols-2 gap-8 h-full">
-                        <div class="space-y-6">
-                            <div class="p-4 rounded-lg border" style="border-color: var(--accent-primary);">
-                                <h4 class="font-semibold mb-2 text-lg themed-text-accent">Step 1: Set Security Rules</h4>
-                                <p class="text-sm themed-text-secondary mb-4">This is a one-time setup. Copy and paste these rules into your Firebase project. The app cannot read or write data without them.</p>
-                                
-                                <div class="mb-4">
-                                    <label class="block font-bold mb-1">Firestore Rules</label>
-                                    <a href="https://console.firebase.google.com/u/0/project/ai-podcasts-14de0/firestore" target="_blank" class="text-xs themed-text-secondary hover:underline">Go to Firestore Page (create database if needed, then click Rules tab) &rarr;</a>
-                                    <textarea id="firestoreRules" readonly class="w-full themed-input rounded-md p-3 h-28 mt-1 text-xs font-mono"></textarea>
-                                    <button type="button" data-copy-target="firestoreRules" class="copy-btn mt-2 w-full themed-button-secondary font-bold py-2 px-4 rounded-md text-sm">Copy Rules</button>
+                        <!-- Step 1: Full Left Column -->
+                        <div class="flex flex-col">
+                            <h4 class="font-semibold mb-3 text-lg themed-text-accent">Step 1: Set Security Rules</h4>
+                            <p class="text-sm themed-text-secondary mb-6">This is a one-time setup. Copy and paste these rules into your Firebase project. The app cannot read or write data without them.</p>
+                            
+                            <div class="flex-1 space-y-6">
+                                <div class="flex-1">
+                                    <label class="block font-bold mb-2">Firestore Rules</label>
+                                    <a href="https://console.firebase.google.com/u/0/project/ai-podcasts-14de0/firestore" target="_blank" class="text-xs themed-text-secondary hover:underline block mb-3">Go to Firestore Page (create database if needed, then click Rules tab) &rarr;</a>
+                                    <textarea id="firestoreRules" readonly class="w-full themed-input rounded-md p-3 h-40 text-xs font-mono mb-3"></textarea>
+                                    <button type="button" data-copy-target="firestoreRules" class="copy-btn w-full themed-button-secondary font-bold py-2 px-4 rounded-md text-sm">Copy Firestore Rules</button>
                                 </div>
 
-                                <div>
-                                    <label class="block font-bold mb-1">Storage Rules</label>
-                                    <a href="https://console.firebase.google.com/u/0/project/ai-podcasts-14de0/storage" target="_blank" class="text-xs themed-text-secondary hover:underline">Go to Storage Page (click 'Get started' if needed, then click Rules tab) &rarr;</a>
-                                    <textarea id="storageRules" readonly class="w-full themed-input rounded-md p-3 h-28 mt-1 text-xs font-mono"></textarea>
-                                    <button type="button" data-copy-target="storageRules" class="copy-btn mt-2 w-full themed-button-secondary font-bold py-2 px-4 rounded-md text-sm">Copy Rules</button>
+                                <div class="flex-1">
+                                    <label class="block font-bold mb-2">Storage Rules</label>
+                                    <a href="https://console.firebase.google.com/u/0/project/ai-podcasts-14de0/storage" target="_blank" class="text-xs themed-text-secondary hover:underline block mb-3">Go to Storage Page (click 'Get started' if needed, then click Rules tab) &rarr;</a>
+                                    <textarea id="storageRules" readonly class="w-full themed-input rounded-md p-3 h-40 text-xs font-mono mb-3"></textarea>
+                                    <button type="button" data-copy-target="storageRules" class="copy-btn w-full themed-button-secondary font-bold py-2 px-4 rounded-md text-sm">Copy Storage Rules</button>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="space-y-6">
-                            <div>
-                                <h4 class="font-semibold mb-2 text-lg themed-text-accent">Step 2: Enter Credentials</h4>
-                                <p class="text-sm themed-text-secondary mb-4">Enter your keys below, or use the Import/Export feature to back them up.</p>
-                                
-                                <div id="importExportSection" class="mb-4">
-                                    <textarea id="importExportArea" class="w-full themed-input rounded-md p-3 h-24 text-xs" placeholder="Paste exported settings here to import..."></textarea>
-                                    <div class="flex gap-4 mt-2">
+                        <!-- Step 2: Full Right Column -->
+                        <div class="flex flex-col">
+                            <h4 class="font-semibold mb-3 text-lg themed-text-accent">Step 2: Enter Credentials</h4>
+                            <p class="text-sm themed-text-secondary mb-6">Enter your keys below, or use the Import/Export feature to back them up.</p>
+                            
+                            <div class="flex-1 space-y-4">
+                                <div id="importExportSection">
+                                    <label class="block font-bold mb-2">Quick Import/Export</label>
+                                    <textarea id="importExportArea" class="w-full themed-input rounded-md p-3 h-24 text-xs mb-3" placeholder="Paste exported settings here to import..."></textarea>
+                                    <div class="flex gap-3 mb-6">
                                         <button type="button" id="importSettingsBtn" class="flex-1 themed-button-secondary font-bold py-2 px-4 rounded-md transition-colors">Import</button>
                                         <button type="button" id="exportSettingsBtn" class="flex-1 themed-button-secondary font-bold py-2 px-4 rounded-md transition-colors">Export</button>
                                     </div>
                                 </div>
 
-                                <form id="firebaseConfigForm" class="space-y-3">
-                                    <input type="text" id="apiKey" placeholder="Firebase apiKey" class="w-full themed-input rounded-md p-3">
+                                <form id="firebaseConfigForm" class="space-y-3 flex-1">
+                                    <div>
+                                        <label class="block font-bold mb-1">Firebase Configuration</label>
+                                        <input type="text" id="apiKey" placeholder="Firebase apiKey" class="w-full themed-input rounded-md p-3">
+                                    </div>
                                     <input type="text" id="authDomain" placeholder="Firebase authDomain" class="w-full themed-input rounded-md p-3">
                                     <input type="text" id="projectId" placeholder="Firebase projectId" class="w-full themed-input rounded-md p-3">
                                     <input type="text" id="storageBucket" placeholder="Firebase storageBucket" class="w-full themed-input rounded-md p-3">
                                     <input type="text" id="messagingSenderId" placeholder="Firebase messagingSenderId" class="w-full themed-input rounded-md p-3">
                                     <input type="text" id="appId" placeholder="Firebase appId" class="w-full themed-input rounded-md p-3">
-                                    <div>
+                                    
+                                    <div class="pt-3">
+                                        <label class="block font-bold mb-1">Optional AI Features</label>
                                         <input type="password" id="geminiApiKey" placeholder="Gemini API Key (Optional)" class="w-full themed-input rounded-md p-3">
                                         <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-xs themed-text-secondary hover:underline ml-1">Get a Gemini API Key for AI features</a>
                                     </div>
 
-                                    <div class="mt-4 p-3 rounded-md bg-orange-900 bg-opacity-50 border border-orange-500">
+                                    <div class="mt-6 p-4 rounded-md bg-orange-900 bg-opacity-50 border border-orange-500">
                                         <p class="text-sm text-orange-200">
-                                            <strong>Reminder:</strong> Anonymous sign-in must be enabled for the app to connect.
-                                            <a href="https://console.firebase.google.com/u/0/project/ai-podcasts-14de0/authentication/providers" target="_blank" class="font-bold text-white hover:underline">Check it here.</a>
+                                            <strong>Important:</strong> Anonymous sign-in must be enabled for the app to connect.
+                                            <a href="https://console.firebase.google.com/u/0/project/ai-podcasts-14de0/authentication/providers" target="_blank" class="font-bold text-white hover:underline">Enable it here &rarr;</a>
                                         </p>
                                     </div>
                                 </form>
