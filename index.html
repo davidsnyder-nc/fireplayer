@@ -2454,8 +2454,11 @@ service firebase.storage {
             setTimeout(() => {
                 const progressContainer = document.getElementById('uploadProgressContainer');
                 const progressBar = document.getElementById('uploadProgressBar');
+                const processingIndicator = document.getElementById('processingIndicator');
+                
                 if (progressContainer) progressContainer.style.display = 'none';
                 if (progressBar) progressBar.style.width = '0%';
+                if (processingIndicator) processingIndicator.style.display = 'none';
                 
                 // Auto-close upload window after successful upload
                 const uploadSection = document.getElementById('uploadSection');
