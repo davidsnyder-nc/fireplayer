@@ -247,7 +247,15 @@
         </div>
         
         <div id="rssFeedsContainer" class="mb-8 hidden">
-             <h2 class="text-2xl font-semibold mb-4">My Feeds</h2>
+             <div class="flex justify-between items-center mb-4">
+                 <h2 class="text-2xl font-semibold">My Feeds</h2>
+                 <button id="refreshFeedsBtn" class="themed-button-secondary px-4 py-2 rounded-md">
+                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                     </svg>
+                     Refresh
+                 </button>
+             </div>
              <div id="rssFeedsList" class="space-y-2"></div>
         </div>
 
@@ -414,6 +422,7 @@
         const importUrlBtn = document.getElementById('importUrlBtn');
         const rssInput = document.getElementById('rssInput');
         const addRssBtn = document.getElementById('addRssBtn');
+        const refreshFeedsBtn = document.getElementById('refreshFeedsBtn');
         const rssFeedsContainer = document.getElementById('rssFeedsContainer');
         const rssFeedsList = document.getElementById('rssFeedsList');
         
@@ -924,6 +933,23 @@ service firebase.storage {
                 }
             });
 
+            // Refresh feeds functionality
+            refreshFeedsBtn.addEventListener('click', async () => {
+                refreshFeedsBtn.disabled = true;
+                refreshFeedsBtn.textContent = 'Refreshing...';
+                
+                try {
+                    await refreshAllFeeds();
+                    showNotification('Feeds refreshed successfully!', 'success');
+                } catch (error) {
+                    console.error('Refresh failed:', error);
+                    showNotification('Failed to refresh feeds', 'error');
+                } finally {
+                    refreshFeedsBtn.disabled = false;
+                    refreshFeedsBtn.textContent = 'Refresh';
+                }
+            });
+
             speedControlButton.addEventListener('click', () => {
                 currentSpeedIndex = (currentSpeedIndex + 1) % playbackSpeeds.length;
                 const newSpeed = playbackSpeeds[currentSpeedIndex];
@@ -1112,8 +1138,12 @@ service firebase.storage {
                         const feed = doc.data();
                         const feedElement = document.createElement('div');
                         feedElement.className = 'themed rounded-lg p-3 flex justify-between items-center';
+                        const lastChecked = feed.lastChecked ? new Date(feed.lastChecked.toDate()).toLocaleDateString() : 'Never';
                         feedElement.innerHTML = `
-                            <span class="themed-text-primary">${feed.url}</span>
+                            <div>
+                                <div class="themed-text-primary">${feed.url}</div>
+                                <div class="text-xs themed-text-secondary">Last checked: ${lastChecked}</div>
+                            </div>
                             <button onclick="deleteFeed('${doc.id}')" class="themed-button-danger px-3 py-1 rounded text-sm">
                                 Remove
                             </button>
@@ -1123,6 +1153,77 @@ service firebase.storage {
                 }
             } catch (error) {
                 console.error('Error loading RSS feeds:', error);
+            }
+        }
+
+        // Refresh all feeds for new episodes
+        async function refreshAllFeeds() {
+            try {
+                const rssCol = collection(db, 'rss_feeds');
+                const rssSnapshot = await getDocs(rssCol);
+                let totalNewEpisodes = 0;
+                
+                // Get existing episode URLs to avoid duplicates
+                const podcastsCol = collection(db, 'podcasts-data', 'public', 'podcasts');
+                const existingPodcasts = await getDocs(podcastsCol);
+                const existingUrls = new Set();
+                existingPodcasts.forEach(doc => {
+                    existingUrls.add(doc.data().url);
+                });
+                
+                for (const feedDoc of rssSnapshot.docs) {
+                    const feed = feedDoc.data();
+                    console.log('Refreshing feed:', feed.url);
+                    
+                    try {
+                        // Parse feed with default limit of 5 newest episodes
+                        const episodes = await parseRSSFeed(feed.url, 5);
+                        let newEpisodes = 0;
+                        
+                        for (const episode of episodes) {
+                            // Only add if not already in library
+                            if (!existingUrls.has(episode.url)) {
+                                await addDoc(collection(db, 'podcasts-data', 'public', 'podcasts'), {
+                                    name: episode.title,
+                                    description: episode.description,
+                                    url: episode.url,
+                                    uploadedAt: serverTimestamp(),
+                                    playbackPosition: 0,
+                                    duration: 0,
+                                    isPlayed: false,
+                                    source: 'rss'
+                                });
+                                existingUrls.add(episode.url);
+                                newEpisodes++;
+                            }
+                        }
+                        
+                        totalNewEpisodes += newEpisodes;
+                        
+                        // Update feed's last checked timestamp
+                        await updateDoc(doc(db, 'rss_feeds', feedDoc.id), {
+                            lastChecked: serverTimestamp()
+                        });
+                        
+                        console.log(`Found ${newEpisodes} new episodes from ${feed.url}`);
+                        
+                    } catch (error) {
+                        console.error(`Failed to refresh feed ${feed.url}:`, error);
+                    }
+                }
+                
+                if (totalNewEpisodes > 0) {
+                    loadPodcasts(); // Refresh the podcast list
+                    showNotification(`Found ${totalNewEpisodes} new episodes!`, 'success');
+                } else {
+                    showNotification('No new episodes found', 'info');
+                }
+                
+                loadRssFeeds(); // Refresh the feeds list to show updated timestamps
+                
+            } catch (error) {
+                console.error('Error refreshing feeds:', error);
+                throw error;
             }
         }
 
@@ -1158,47 +1259,127 @@ service firebase.storage {
         // RSS Feed parsing function
         async function parseRSSFeed(url, limit = 5) {
             try {
-                // Use a CORS proxy for RSS feeds
-                const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
-                const response = await fetch(proxyUrl);
+                console.log('Parsing RSS feed:', url);
                 
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                // Try multiple CORS proxies for better reliability
+                const proxies = [
+                    `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+                    `https://corsproxy.io/?${encodeURIComponent(url)}`,
+                    `https://cors-anywhere.herokuapp.com/${url}`
+                ];
+                
+                let response;
+                let text;
+                
+                for (const proxyUrl of proxies) {
+                    try {
+                        console.log('Trying proxy:', proxyUrl);
+                        response = await fetch(proxyUrl);
+                        if (response.ok) {
+                            text = await response.text();
+                            break;
+                        }
+                    } catch (e) {
+                        console.log('Proxy failed:', e.message);
+                        continue;
+                    }
                 }
                 
-                const text = await response.text();
+                if (!text) {
+                    throw new Error('Failed to fetch RSS feed from all proxies');
+                }
+                
+                console.log('RSS feed content length:', text.length);
+                
                 const parser = new DOMParser();
                 const xmlDoc = parser.parseFromString(text, 'text/xml');
                 
                 // Check for parsing errors
                 const parseError = xmlDoc.querySelector('parsererror');
                 if (parseError) {
+                    console.error('XML parsing error:', parseError.textContent);
                     throw new Error('Invalid XML format');
                 }
                 
-                const items = xmlDoc.querySelectorAll('item');
+                // Try multiple selectors for items (different RSS formats)
+                let items = xmlDoc.querySelectorAll('item');
+                if (items.length === 0) {
+                    items = xmlDoc.querySelectorAll('entry'); // Atom feeds
+                }
+                
+                console.log('Found items:', items.length);
+                
+                if (items.length === 0) {
+                    throw new Error('No episodes found in feed');
+                }
+                
                 const episodes = [];
                 
                 for (let i = 0; i < Math.min(items.length, limit); i++) {
                     const item = items[i];
-                    const title = item.querySelector('title')?.textContent || `Episode ${i + 1}`;
-                    const description = item.querySelector('description')?.textContent || '';
                     
-                    // Look for audio enclosure
-                    const enclosure = item.querySelector('enclosure[type*="audio"]');
+                    // Get title - try multiple selectors
+                    let title = item.querySelector('title')?.textContent || 
+                               item.querySelector('itunes\\:title')?.textContent ||
+                               `Episode ${i + 1}`;
+                    
+                    // Get description - try multiple selectors
+                    let description = item.querySelector('description')?.textContent || 
+                                    item.querySelector('itunes\\:summary')?.textContent ||
+                                    item.querySelector('content\\:encoded')?.textContent || 
+                                    '';
+                    
+                    // Clean up description (remove HTML tags)
+                    description = description.replace(/<[^>]*>/g, '').trim();
+                    
+                    // Look for audio enclosure - try multiple approaches
+                    let audioUrl = null;
+                    
+                    // Method 1: Standard enclosure
+                    const enclosure = item.querySelector('enclosure');
                     if (enclosure) {
-                        const audioUrl = enclosure.getAttribute('url');
-                        if (audioUrl) {
-                            episodes.push({
-                                title: title.trim(),
-                                description: description.trim().substring(0, 200) + (description.length > 200 ? '...' : ''),
-                                url: audioUrl
-                            });
+                        const type = enclosure.getAttribute('type') || '';
+                        if (type.includes('audio') || type.includes('mpeg') || type.includes('mp3')) {
+                            audioUrl = enclosure.getAttribute('url');
                         }
+                    }
+                    
+                    // Method 2: Media namespace
+                    if (!audioUrl) {
+                        const mediaContent = item.querySelector('media\\:content');
+                        if (mediaContent) {
+                            const type = mediaContent.getAttribute('type') || '';
+                            if (type.includes('audio')) {
+                                audioUrl = mediaContent.getAttribute('url');
+                            }
+                        }
+                    }
+                    
+                    // Method 3: Link elements
+                    if (!audioUrl) {
+                        const links = item.querySelectorAll('link');
+                        for (const link of links) {
+                            const href = link.getAttribute('href') || link.textContent;
+                            if (href && (href.includes('.mp3') || href.includes('.m4a') || href.includes('.wav'))) {
+                                audioUrl = href;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    if (audioUrl) {
+                        episodes.push({
+                            title: title.trim(),
+                            description: description.substring(0, 200) + (description.length > 200 ? '...' : ''),
+                            url: audioUrl.trim()
+                        });
+                        console.log(`Found episode: ${title.trim()}`);
                     }
                 }
                 
+                console.log('Successfully parsed episodes:', episodes.length);
                 return episodes;
+                
             } catch (error) {
                 console.error('RSS parsing error:', error);
                 throw new Error(`Failed to parse RSS feed: ${error.message}`);
