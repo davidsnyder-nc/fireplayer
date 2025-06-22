@@ -208,7 +208,7 @@
                          class="h-8 w-8"
                          style="object-fit: contain;"
                          onerror="this.onerror=null; this.src='https://cdn.pixabay.com/photo/2022/07/21/11/48/fire-7336074_960_720.png';">
-                    <h1 class="text-2xl font-bold themed-text-accent whitespace-nowrap">🔥 Fire Player</h1>
+                    <h1 class="text-2xl font-bold themed-text-accent whitespace-nowrap">Fire Player</h1>
                 </div>
                 <div class="flex items-center gap-3">
                     <button id="showUploadFormBtn" class="themed-button-primary font-bold py-2 px-4 rounded-md transition-transform duration-200 transform hover:scale-105">
@@ -361,14 +361,14 @@
         <audio id="audioPlayer" class="hidden"></audio>
         
         <!-- Audio Controls -->
-        <div id="audioControls" class="fixed bottom-0 left-0 right-0 themed border-t z-40 hidden" style="border-color: var(--bg-tertiary-hover)">
+        <div id="audioControls" class="fixed bottom-0 left-0 right-0 themed border-t z-40" style="border-color: var(--bg-tertiary-hover)">
             <!-- Now Playing Bar -->
-            <div id="nowPlayingBar" class="flex items-center p-3 border-b" style="border-color: var(--bg-tertiary-hover)">
+            <div id="nowPlayingBar" class="flex items-center p-3 border-b hidden" style="border-color: var(--bg-tertiary-hover)">
                 <div class="flex items-center flex-grow min-w-0">
                     <img id="nowPlayingArtwork" src="" class="w-12 h-12 rounded-lg object-cover mr-3">
                     <div class="flex-grow min-w-0">
-                        <h4 id="nowPlayingTitle" class="font-semibold truncate text-sm"></h4>
-                        <p id="nowPlayingTime" class="text-xs themed-text-secondary"></p>
+                        <h4 id="nowPlayingTitle" class="font-semibold truncate text-sm">No track selected</h4>
+                        <p id="nowPlayingTime" class="text-xs themed-text-secondary">00:00 / 00:00</p>
                     </div>
                 </div>
                 <div class="flex items-center space-x-2">
@@ -385,7 +385,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                         </svg>
                     </button>
-                    <button id="mainPlayPauseBtn" class="bg-orange-500 hover:bg-orange-600 rounded-full p-3 transition-all">
+                    <button id="mainPlayPauseBtn" class="bg-orange-500 hover:bg-orange-600 rounded-full p-3 transition-all disabled:opacity-50 disabled:cursor-not-allowed" disabled>
                         <svg id="mainPlayIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M8 5v14l11-7z"/>
                         </svg>
