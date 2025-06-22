@@ -230,14 +230,7 @@
                     <span class="themed-text-secondary">OR</span>
                     <hr class="flex-grow border-t border-gray-600">
                  </div>
-                 <div>
-                     <label for="rssInput" class="block text-sm font-medium themed-text-secondary mb-1">Add RSS Feed</label>
-                    <div class="mt-1 flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4">
-                        <input type="text" id="rssInput" placeholder="Paste an RSS Feed URL here..." class="w-full flex-grow themed-input rounded-md px-4 py-3">
-                        <input type="number" id="rssLimit" min="1" max="10" value="5" class="w-20 themed-input rounded-md px-4 py-3">
-                        <button id="addRssBtn" class="w-full sm:w-auto flex-shrink-0 themed-button-secondary font-bold py-3 px-6 rounded-md">Add Feed</button>
-                    </div>
-                 </div>
+
             </div>
             <div id="uploadProgressContainer" class="mt-4 hidden">
                  <div class="w-full bg-gray-700 rounded-full h-2.5">
@@ -426,7 +419,7 @@
     <script type="module">
         import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, addDoc, onSnapshot, updateDoc, deleteDoc, serverTimestamp, terminate, writeBatch, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, doc, addDoc, onSnapshot, updateDoc, deleteDoc, serverTimestamp, terminate, writeBatch, query, where, getDocs, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
         let app, auth, db, storage, userId, currentPlayingId = null, updateTimer = null;
@@ -1477,6 +1470,67 @@ service firebase.storage {
             } catch (error) {
                 console.error('Error refreshing feeds:', error);
                 throw error;
+            }
+        }
+
+        // Refresh single RSS feed - make it globally accessible
+        window.refreshSingleFeed = async function(feedId) {
+            try {
+                const feedDoc = await getDoc(doc(db, 'rss_feeds', feedId));
+                if (!feedDoc.exists()) {
+                    showNotification('Feed not found', 'error');
+                    return;
+                }
+                
+                const feed = feedDoc.data();
+                console.log('Refreshing single feed:', feed.url);
+                
+                // Get existing episode URLs to avoid duplicates
+                const podcastsCol = collection(db, 'podcasts-data', 'public', 'podcasts');
+                const existingPodcasts = await getDocs(podcastsCol);
+                const existingUrls = new Set();
+                existingPodcasts.forEach(doc => {
+                    existingUrls.add(doc.data().url);
+                });
+                
+                const feedData = await parseRSSFeed(feed.url, 5);
+                const { episodes } = feedData;
+                let newEpisodes = 0;
+                
+                for (const episode of episodes) {
+                    if (!existingUrls.has(episode.url)) {
+                        await addDoc(collection(db, 'podcasts-data', 'public', 'podcasts'), {
+                            name: episode.title,
+                            description: episode.description,
+                            url: episode.url,
+                            artworkUrl: episode.artworkUrl,
+                            podcastTitle: episode.podcastTitle,
+                            uploadedAt: serverTimestamp(),
+                            playbackPosition: 0,
+                            duration: 0,
+                            isPlayed: false,
+                            source: 'rss'
+                        });
+                        newEpisodes++;
+                    }
+                }
+                
+                // Update feed's last checked timestamp
+                await updateDoc(doc(db, 'rss_feeds', feedId), {
+                    lastChecked: serverTimestamp()
+                });
+                
+                loadManageFeeds();
+                if (newEpisodes > 0) {
+                    loadRssEpisodes();
+                    showNotification(`Found ${newEpisodes} new episodes from ${feed.title || feed.url}!`, 'success');
+                } else {
+                    showNotification('No new episodes found', 'info');
+                }
+                
+            } catch (error) {
+                console.error('Single feed refresh failed:', error);
+                showNotification(`Failed to refresh feed: ${error.message}`, 'error');
             }
         }
 
