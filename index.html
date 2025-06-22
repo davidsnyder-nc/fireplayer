@@ -2660,6 +2660,7 @@ service firebase.storage {
                 audioPlayer.currentTime = podcast.playbackPosition;
                 audioPlayer.play().catch(e => console.error("Play error:", e));
                 updateSinglePodcastUI(id);
+                window.updateCenterPlayButton();
             }
         }
         
