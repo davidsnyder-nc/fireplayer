@@ -617,72 +617,72 @@
             </div>
         </div>
         
-        <div id="settingsModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center hidden z-50 p-4">
-            <div class="themed rounded-lg shadow-2xl w-full max-w-6xl mx-auto h-full max-h-[90vh] flex flex-col">
-                <div class="p-6 border-b border-gray-600">
-                    <h3 class="text-xl font-bold">Setup & Configuration</h3>
+        <div id="settingsModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center hidden z-50 p-2 sm:p-4">
+            <div class="themed rounded-lg shadow-2xl w-full max-w-6xl mx-auto h-full max-h-[95vh] sm:max-h-[90vh] flex flex-col">
+                <div class="p-4 sm:p-6 border-b border-gray-600">
+                    <h3 class="text-lg sm:text-xl font-bold">Setup & Configuration</h3>
                 </div>
                 
-                <div class="flex-1 overflow-y-auto p-6">
-                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-8 h-full">
-                        <!-- Step 1: Full Left Column -->
-                        <div class="flex flex-col">
+                <div class="flex-1 overflow-y-auto p-4 sm:p-6">
+                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 xl:gap-8">
+                        <!-- Step 1: Security Rules -->
+                        <div class="order-1">
                             <h4 class="font-semibold mb-3 text-lg themed-text-accent">Step 1: Set Security Rules</h4>
-                            <p class="text-sm themed-text-secondary mb-6">This is a one-time setup. Copy and paste these rules into your Firebase project. The app cannot read or write data without them.</p>
+                            <p class="text-sm themed-text-secondary mb-4 sm:mb-6">This is a one-time setup. Copy and paste these rules into your Firebase project. The app cannot read or write data without them.</p>
                             
-                            <div class="flex-1 space-y-6">
-                                <div class="flex-1">
+                            <div class="space-y-4 sm:space-y-6">
+                                <div>
                                     <label class="block font-bold mb-2">Firestore Rules</label>
                                     <a href="https://console.firebase.google.com/u/0/project/ai-podcasts-14de0/firestore" target="_blank" class="text-xs themed-text-secondary hover:underline block mb-3">Go to Firestore Page (create database if needed, then click Rules tab) &rarr;</a>
-                                    <textarea id="firestoreRules" readonly class="w-full themed-input rounded-md p-3 h-40 text-xs font-mono mb-3"></textarea>
+                                    <textarea id="firestoreRules" readonly class="w-full themed-input rounded-md p-3 h-32 sm:h-40 text-xs font-mono mb-3"></textarea>
                                     <button type="button" data-copy-target="firestoreRules" class="copy-btn w-full themed-button-secondary font-bold py-2 px-4 rounded-md text-sm">Copy Firestore Rules</button>
                                 </div>
 
-                                <div class="flex-1">
+                                <div>
                                     <label class="block font-bold mb-2">Storage Rules</label>
                                     <a href="https://console.firebase.google.com/u/0/project/ai-podcasts-14de0/storage" target="_blank" class="text-xs themed-text-secondary hover:underline block mb-3">Go to Storage Page (click 'Get started' if needed, then click Rules tab) &rarr;</a>
-                                    <textarea id="storageRules" readonly class="w-full themed-input rounded-md p-3 h-40 text-xs font-mono mb-3"></textarea>
+                                    <textarea id="storageRules" readonly class="w-full themed-input rounded-md p-3 h-32 sm:h-40 text-xs font-mono mb-3"></textarea>
                                     <button type="button" data-copy-target="storageRules" class="copy-btn w-full themed-button-secondary font-bold py-2 px-4 rounded-md text-sm">Copy Storage Rules</button>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Step 2: Full Right Column -->
-                        <div class="flex flex-col">
+                        <!-- Step 2: Credentials -->
+                        <div class="order-2">
                             <h4 class="font-semibold mb-3 text-lg themed-text-accent">Step 2: Enter Credentials</h4>
-                            <p class="text-sm themed-text-secondary mb-6">Enter your keys below, or use the Import/Export feature to back them up.</p>
+                            <p class="text-sm themed-text-secondary mb-4 sm:mb-6">Enter your keys below, or use the Import/Export feature to back them up.</p>
                             
-                            <div class="flex-1 space-y-4">
+                            <div class="space-y-4">
                                 <div id="importExportSection">
                                     <label class="block font-bold mb-2">Quick Import/Export</label>
-                                    <textarea id="importExportArea" class="w-full themed-input rounded-md p-3 h-24 text-xs mb-3" placeholder="Paste exported settings here to import..."></textarea>
-                                    <div class="flex gap-3 mb-6">
+                                    <textarea id="importExportArea" class="w-full themed-input rounded-md p-3 h-20 sm:h-24 text-xs mb-3" placeholder="Paste exported settings here to import..."></textarea>
+                                    <div class="flex gap-3 mb-4 sm:mb-6">
                                         <button type="button" id="importSettingsBtn" class="flex-1 themed-button-secondary font-bold py-2 px-4 rounded-md transition-colors">Import</button>
                                         <button type="button" id="exportSettingsBtn" class="flex-1 themed-button-secondary font-bold py-2 px-4 rounded-md transition-colors">Export</button>
                                     </div>
                                 </div>
 
-                                <form id="firebaseConfigForm" class="space-y-3 flex-1">
+                                <form id="firebaseConfigForm" class="space-y-3">
                                     <div>
-                                        <label class="block font-bold mb-1">Firebase Configuration</label>
-                                        <input type="text" id="apiKey" placeholder="Firebase apiKey" class="w-full themed-input rounded-md p-3">
+                                        <label class="block font-bold mb-1 text-sm">Firebase Configuration</label>
+                                        <input type="text" id="apiKey" placeholder="Firebase apiKey" class="w-full themed-input rounded-md p-3 text-sm">
                                     </div>
-                                    <input type="text" id="authDomain" placeholder="Firebase authDomain" class="w-full themed-input rounded-md p-3">
-                                    <input type="text" id="projectId" placeholder="Firebase projectId" class="w-full themed-input rounded-md p-3">
-                                    <input type="text" id="storageBucket" placeholder="Firebase storageBucket" class="w-full themed-input rounded-md p-3">
-                                    <input type="text" id="messagingSenderId" placeholder="Firebase messagingSenderId" class="w-full themed-input rounded-md p-3">
-                                    <input type="text" id="appId" placeholder="Firebase appId" class="w-full themed-input rounded-md p-3">
+                                    <input type="text" id="authDomain" placeholder="Firebase authDomain" class="w-full themed-input rounded-md p-3 text-sm">
+                                    <input type="text" id="projectId" placeholder="Firebase projectId" class="w-full themed-input rounded-md p-3 text-sm">
+                                    <input type="text" id="storageBucket" placeholder="Firebase storageBucket" class="w-full themed-input rounded-md p-3 text-sm">
+                                    <input type="text" id="messagingSenderId" placeholder="Firebase messagingSenderId" class="w-full themed-input rounded-md p-3 text-sm">
+                                    <input type="text" id="appId" placeholder="Firebase appId" class="w-full themed-input rounded-md p-3 text-sm">
                                     
-                                    <div class="pt-3">
-                                        <label class="block font-bold mb-1">Optional AI Features</label>
-                                        <input type="password" id="geminiApiKey" placeholder="Gemini API Key (Optional)" class="w-full themed-input rounded-md p-3">
-                                        <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-xs themed-text-secondary hover:underline ml-1">Get a Gemini API Key for AI features</a>
+                                    <div class="pt-2">
+                                        <label class="block font-bold mb-1 text-sm">Optional AI Features</label>
+                                        <input type="password" id="geminiApiKey" placeholder="Gemini API Key (Optional)" class="w-full themed-input rounded-md p-3 text-sm">
+                                        <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-xs themed-text-secondary hover:underline ml-1 block mt-1">Get a Gemini API Key for AI features</a>
                                     </div>
 
-                                    <div class="mt-6 p-4 rounded-md bg-orange-900 bg-opacity-50 border border-orange-500">
-                                        <p class="text-sm text-orange-200">
+                                    <div class="mt-4 p-3 sm:p-4 rounded-md bg-orange-900 bg-opacity-50 border border-orange-500">
+                                        <p class="text-xs sm:text-sm text-orange-200">
                                             <strong>Important:</strong> Anonymous sign-in must be enabled for the app to connect.
-                                            <a href="https://console.firebase.google.com/u/0/project/ai-podcasts-14de0/authentication/providers" target="_blank" class="font-bold text-white hover:underline">Enable it here &rarr;</a>
+                                            <a href="https://console.firebase.google.com/u/0/project/ai-podcasts-14de0/authentication/providers" target="_blank" class="font-bold text-white hover:underline block mt-1">Enable it here &rarr;</a>
                                         </p>
                                     </div>
                                 </form>
@@ -691,10 +691,10 @@
                     </div>
                 </div>
                 
-                <div class="p-6 border-t border-gray-600">
-                    <div class="flex justify-end space-x-4">
-                        <button type="button" id="closeSettings" class="themed-button-secondary font-bold py-2 px-4 rounded-md transition-colors">Close</button>
-                        <button type="submit" id="saveSettings" class="themed-button-primary font-bold py-2 px-4 rounded-md transition-colors">Save and Initialize</button>
+                <div class="p-4 sm:p-6 border-t border-gray-600">
+                    <div class="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4">
+                        <button type="button" id="closeSettings" class="themed-button-secondary font-bold py-3 sm:py-2 px-4 rounded-md transition-colors">Close</button>
+                        <button type="submit" id="saveSettings" class="themed-button-primary font-bold py-3 sm:py-2 px-4 rounded-md transition-colors">Save and Initialize</button>
                     </div>
                 </div>
 
