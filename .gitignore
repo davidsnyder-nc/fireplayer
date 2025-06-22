@@ -1,6 +1,9 @@
 # Firebase config with actual credentials
 # firebase-config.json
 
+# Attached assets (development files)
+attached_assets/
+
 # OS files
 .DS_Store
 Thumbs.db
