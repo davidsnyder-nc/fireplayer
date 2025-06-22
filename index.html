@@ -980,7 +980,7 @@ service firebase.storage {
              const apiKey = currentConfig.geminiApiKey;
              if(!apiKey) return null;
 
-             const prompt = `Create a unique, abstract, and visually appealing cover art for a track titled "${title}". Use a modern, graphic design style with a fiery color palette of reds, oranges, and yellows. The theme should be inspired by the words in the title. For example, for "Ocean Waves Meditation", use flowing lines in shades of blue and white. For "Finance Talk", use greens and golds in a geometric pattern. Do NOT include any text in the image.`;
+             const prompt = `Create a unique, abstract, and visually appealing cover art for a track titled "${title}". Use a modern, graphic design style with a fiery color palette of reds, oranges, and yellows. The theme should be inspired by the words in the title. For example, for "Ocean Waves Meditation", use flowing lines in shades of blue and white. For "Finance Talk", use greens and golds in a geometric pattern. IMPORTANT: Do NOT include any text, letters, numbers, or written words anywhere in the image. Create a purely visual, text-free design.`;
              try {
                 const payload = { instances: [{ prompt }], parameters: { "sampleCount": 1} };
                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`;
