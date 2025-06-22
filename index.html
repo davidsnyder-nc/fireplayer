@@ -230,7 +230,14 @@
                     <span class="themed-text-secondary">OR</span>
                     <hr class="flex-grow border-t border-gray-600">
                  </div>
-
+                 <div>
+                     <label for="rssInput" class="block text-sm font-medium themed-text-secondary mb-1">Add RSS Feed</label>
+                    <div class="mt-1 flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4">
+                        <input type="text" id="rssInput" placeholder="Paste an RSS Feed URL here..." class="w-full flex-grow themed-input rounded-md px-4 py-3">
+                        <input type="number" id="rssLimit" min="1" max="10" value="5" class="w-20 themed-input rounded-md px-4 py-3">
+                        <button id="addRssBtn" class="w-full sm:w-auto flex-shrink-0 themed-button-secondary font-bold py-3 px-6 rounded-md">Import</button>
+                    </div>
+                 </div>
             </div>
             <div id="uploadProgressContainer" class="mt-4 hidden">
                  <div class="w-full bg-gray-700 rounded-full h-2.5">
@@ -556,16 +563,24 @@
         }
 
         function setupAuthListener() {
+            console.log('Setting up auth listener...');
             onAuthStateChanged(auth, user => {
                 if (user) {
+                    console.log('User authenticated:', user.uid);
                     userId = user.uid;
                     loadPodcasts();
                     loadManageFeeds();
                 } else {
+                    console.log('No user, signing in anonymously...');
                     signInAnonymously(auth).catch(error => {
                         console.error("Anonymous sign-in failed:", error);
-                        loadingMessage.innerHTML = `Authentication failed. <button id="openSettingsFromMsg" class="themed-text-accent underline">Check your settings</button> and ensure Anonymous Sign-In is enabled in Firebase.`;
-                        document.getElementById('openSettingsFromMsg').addEventListener('click', () => settingsModal.classList.remove('hidden'));
+                        if (loadingMessage) {
+                            loadingMessage.innerHTML = `Authentication failed. <button id="openSettingsFromMsg" class="themed-text-accent underline">Check your settings</button> and ensure Anonymous Sign-In is enabled in Firebase.`;
+                            const settingsBtn = document.getElementById('openSettingsFromMsg');
+                            if (settingsBtn && settingsModal) {
+                                settingsBtn.addEventListener('click', () => settingsModal.classList.remove('hidden'));
+                            }
+                        }
                     });
                 }
             });
@@ -933,14 +948,14 @@ service firebase.storage {
         };
         
         async function loadInitialConfig() {
-            loadingMessage.textContent = 'Loading configuration...';
+            if (loadingMessage) loadingMessage.textContent = 'Loading configuration...';
             let firebaseConfig;
 
             try {
                 const response = await fetch('firebase-config.json');
                 if (response.ok) {
                     firebaseConfig = await response.json();
-                    showNotification('Loaded config from firebase-config.json', 'success');
+                    console.log('Loaded Firebase config from file');
                 } else {
                     console.log('Could not load firebase-config.json, status:', response.status);
                 }
@@ -953,15 +968,23 @@ service firebase.storage {
                 if (storedConfig) {
                     try {
                         firebaseConfig = JSON.parse(storedConfig);
+                        console.log('Loaded Firebase config from localStorage');
                     } catch (e) { console.error("Could not parse stored config", e); }
                 }
             }
 
             if (firebaseConfig && Object.values(firebaseConfig).some(v => v)) {
+                console.log('Initializing Firebase with config...');
                 await initializeFirebase(firebaseConfig);
             } else {
-                loadingMessage.innerHTML = 'Firebase is not configured. Please provide credentials in <button id="openSettingsFromMsg" class="themed-text-accent underline">settings</button>.';
-                document.getElementById('openSettingsFromMsg').addEventListener('click', () => settingsModal.classList.remove('hidden'));
+                console.log('No Firebase config found');
+                if (loadingMessage) {
+                    loadingMessage.innerHTML = 'Firebase is not configured. Please provide credentials in <button id="openSettingsFromMsg" class="themed-text-accent underline">settings</button>.';
+                    const settingsBtn = document.getElementById('openSettingsFromMsg');
+                    if (settingsBtn && settingsModal) {
+                        settingsBtn.addEventListener('click', () => settingsModal.classList.remove('hidden'));
+                    }
+                }
             }
         }
         
