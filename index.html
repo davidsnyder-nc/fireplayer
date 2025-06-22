@@ -1450,32 +1450,36 @@ service firebase.storage {
                 updatePlaybackModeUI();
             });
 
-            // Skip buttons
+            // Skip buttons - only add listeners if buttons exist
             const skipBackBtn = document.getElementById('skipBackBtn');
             const skipForwardBtn = document.getElementById('skipForwardBtn');
 
-            skipBackBtn.addEventListener('click', () => {
-                if (currentPlayingId && audioPlayer.src) {
-                    const newTime = Math.max(0, audioPlayer.currentTime - 30);
-                    audioPlayer.currentTime = newTime;
-                    if (podcastsData[currentPlayingId]) {
-                        podcastsData[currentPlayingId].playbackPosition = newTime;
+            if (skipBackBtn) {
+                skipBackBtn.addEventListener('click', () => {
+                    if (currentPlayingId && audioPlayer.src) {
+                        const newTime = Math.max(0, audioPlayer.currentTime - 30);
+                        audioPlayer.currentTime = newTime;
+                        if (podcastsData[currentPlayingId]) {
+                            podcastsData[currentPlayingId].playbackPosition = newTime;
+                            updateSinglePodcastUI(currentPlayingId);
+                            updatePlaybackPosition(currentPlayingId, newTime);
+                        }
+                    }
+                });
+            }
+
+            if (skipForwardBtn) {
+                skipForwardBtn.addEventListener('click', () => {
+                    if (currentPlayingId && audioPlayer.src && podcastsData[currentPlayingId]) {
+                        const podcast = podcastsData[currentPlayingId];
+                        const newTime = Math.min(podcast.duration || audioPlayer.duration, audioPlayer.currentTime + 30);
+                        audioPlayer.currentTime = newTime;
+                        podcast.playbackPosition = newTime;
                         updateSinglePodcastUI(currentPlayingId);
                         updatePlaybackPosition(currentPlayingId, newTime);
                     }
-                }
-            });
-
-            skipForwardBtn.addEventListener('click', () => {
-                if (currentPlayingId && audioPlayer.src && podcastsData[currentPlayingId]) {
-                    const podcast = podcastsData[currentPlayingId];
-                    const newTime = Math.min(podcast.duration || audioPlayer.duration, audioPlayer.currentTime + 30);
-                    audioPlayer.currentTime = newTime;
-                    podcast.playbackPosition = newTime;
-                    updateSinglePodcastUI(currentPlayingId);
-                    updatePlaybackPosition(currentPlayingId, newTime);
-                }
-            });
+                });
+            }
 
             const savedView = localStorage.getItem('viewMode') || 'list';
             setViewMode(savedView);
