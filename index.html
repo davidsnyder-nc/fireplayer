@@ -1139,55 +1139,6 @@ service firebase.storage {
                 return null;
             }
         }
-                fileLabel.textContent = "Creating Artwork...";
-                const generatedArtBase64 = await generateArtwork(intelligentName);
-                if(generatedArtBase64) {
-                    fileLabel.textContent = "Uploading Artwork...";
-                    finalArtworkUrl = await uploadArtwork(generatedArtBase64, `artwork_${Date.now()}.png`);
-                }
-            }
-
-            fileLabel.textContent = "Uploading Audio...";
-
-            const progressContainer = document.getElementById('uploadProgressContainer');
-            const progressBar = document.getElementById('uploadProgressBar');
-            progressContainer.style.display = 'block';
-            progressBar.style.width = '0%';
-
-            const storagePath = `podcasts/${Date.now()}-${file.name}`;
-            const uploadTask = uploadBytesResumable(ref(storage, storagePath), file);
-
-            uploadTask.on('state_changed', 
-                snapshot => progressBar.style.width = `${(snapshot.bytesTransferred / snapshot.totalBytes) * 100}%`,
-                error => { 
-                    console.error("Upload failed:", error);
-                    showNotification(`Upload failed: ${error.code}. Check Storage Rules.`, "error"); 
-                    resetUploadUI(); 
-                }, 
-                () => getDownloadURL(uploadTask.snapshot.ref).then(url => {
-                    const tempAudio = document.createElement('audio');
-                    tempAudio.src = URL.createObjectURL(file);
-                    tempAudio.onloadedmetadata = async () => {
-                        const newOrderIndex = Object.keys(podcastsData).length;
-                        await addDoc(collection(db, 'podcasts-data', 'public', 'podcasts'), { 
-                            name: intelligentName, 
-                            url, 
-                            storagePath, 
-                            playbackPosition: 0, 
-                            duration: tempAudio.duration, 
-                            uploadedAt: serverTimestamp(), 
-                            uploader: userId,
-                            order: newOrderIndex,
-                            artworkUrl: finalArtworkUrl,
-                            description: metadata.description,
-                            isPlayed: false
-                        });
-                        showNotification("Podcast uploaded!", "success");
-                        resetUploadUI();
-                    };
-                })
-            );
-        };
         
         async function loadInitialConfig() {
             if (loadingMessage) loadingMessage.textContent = 'Loading configuration...';
